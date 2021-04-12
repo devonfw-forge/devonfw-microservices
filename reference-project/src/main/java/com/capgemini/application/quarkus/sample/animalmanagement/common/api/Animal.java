@@ -1,4 +1,4 @@
-package com.capgemini.academy.quarkus.domain.model;
+package com.capgemini.application.quarkus.sample.animalmanagement.common.api;
 
 import lombok.Getter;
 import lombok.Setter;

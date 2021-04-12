@@ -1,4 +1,4 @@
-package com.capgemini.academy.quarkus.rs;
+package com.capgemini.application.quarkus.sample;
 
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.info.Contact;

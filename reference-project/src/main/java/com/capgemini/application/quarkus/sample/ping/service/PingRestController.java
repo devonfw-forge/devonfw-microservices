@@ -1,4 +1,4 @@
-package com.capgemini.academy.quarkus.rs;
+package com.capgemini.application.quarkus.sample.ping.service;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
