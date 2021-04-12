@@ -1,0 +1,19 @@
+apiVersion: v2
+name: demo-quarkus
+version: 1.0.0
+description: Demo quarkus helm chart
+appVersion: 1.0.0
+keywords:
+  - course
+  - demo
+  - quarkus
+maintainers:
+  - name: Tkit Developer
+    email: tkit-dev@1000kit.org
+# Define custom helm chart dependencies
+#dependencies:
+#- name: postgresql
+#  version: ^3
+#  repository: alias:1000kit
+#  condition: db.internal
+

@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+# deployment v1
+metadata:
+  # metadata labels - tags under which this resources can be found in k8s api
+  labels:
+    app: demo-quarkus
+    app.kubernetes.io/name: demo-quarkus
+  name: demo-quarkus
+spec:
+  # scale default to 2 instances
+  replicas: {{ .Values.replicas | default 2 }}
+  selector:
+    #how are the pods linked together
+    matchLabels:
+      app: demo-quarkus
+  template:
+    metadata:
+      labels:
+        app: demo-quarkus
+    spec:
+      # pod spec, we want a single container in our pods
+      containers:
+        - name: demo-quarkus
+          # where should the image come from
+          image:  {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          # always perform pull when creating pod
+          imagePullPolicy: Always
+          # env vars so we can connect to DB
+          env:
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: jdbc:postgresql://postgresql:5432/demo
+            - name: QUARKUS_DATASOURCE_USERNAME
+              value: demo
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              value: demo
+          # live & ready probes, using our healthcheck endpoints
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: {{ .Values.livenessProbe.url }}
+              port: {{ .Values.pod.port }}
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+          ports:
+            - containerPort: {{ .Values.pod.port }}
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: {{ .Values.readinessProbe.url }}
+              port: {{ .Values.pod.port }}
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+      # we can define init containers, single run jobs that run before our main container does
+      # we use them to init database and check that its ready
+      initContainers:
+        - command:
+            - /bin/bash
+            - '-c'
+            - >-
+              psql -tc "SELECT 1 FROM pg_database WHERE datname =
+              'demo'" | grep -q 1 | psql -c "CREATE USER
+              demo WITH ENCRYPTED PASSWORD 'demo';" -c
+              "CREATE DATABASE demo;" -c "GRANT ALL PRIVILEGES
+              ON DATABASE demo TO demo;"
+          env:
+            - name: PGHOST
+              value: postgresql
+            - name: PGPORT
+              value: '5432'
+            - name: PGDATABASE
+              value: null
+            - name: PGUSER
+              value: postgres
+            - name: PGPASSWORD
+              value: postgres
+            - name: DISABLE_WELCOME_MESSAGE
+              value: 'true'
+          image: 'docker.io/bitnami/postgresql:12.2.0'
+          name: create-db
+        - command:
+            - /bin/bash
+            - '-c'
+            - until pg_isready; do echo waiting for database; sleep 2; done;
+          env:
+            - name: PGHOST
+              value: postgresql
+            - name: PGPORT
+              value: '5432'
+            - name: PGDATABASE
+              value: demo
+            - name: PGUSER
+              value: demo
+            - name: PGPASSWORD
+              value: demo
+            - name: DISABLE_WELCOME_MESSAGE
+              value: 'true'
+          image: 'docker.io/bitnami/postgresql:12.2.0'
+          name: check-db

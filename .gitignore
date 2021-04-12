@@ -1,0 +1,42 @@
+#Maven
+reference-project/target/
+reference-project/pom.xml.tag
+reference-project/pom.xml.releaseBackup
+reference-project/pom.xml.versionsBackup
+reference-project/release.properties
+reference-project/.mvn/maven-wrapper.jar
+
+# Eclipse
+reference-project/.project
+reference-project/.classpath
+reference-project/.settings/
+reference-project/bin/
+
+# IntelliJ
+.idea
+*.ipr
+*.iml
+*.iws
+
+# NetBeans
+nb-configuration.xml
+
+# Visual Studio Code
+.vscode
+.factorypath
+
+# OSX
+.DS_Store
+
+# Vim
+*.swp
+*.swo
+
+# patch
+*.orig
+*.rej
+
+# Local environment
+.env
+
+*.tgz

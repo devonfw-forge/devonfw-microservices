@@ -1,0 +1,20 @@
+# a simple ingress for our service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-quarkus
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: demo-quarkus
+                port:
+                  number: 8080
+      # this will work if you have dnsmasq(tkit env guide)
+      host: demo-quarkus.localhost
