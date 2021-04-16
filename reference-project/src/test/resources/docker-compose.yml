@@ -1,0 +1,52 @@
+version: '3.9'
+services:
+  demo-db:
+    container_name: demo-db
+    image: postgres:11.5
+    environment:
+      POSTGRES_DB: "demo"
+      POSTGRES_USER: "demo"
+      POSTGRES_PASSWORD: "demo"
+    labels:
+      - "test.priority=90"
+      - "test.Wait.forLogMessage.regex=.*database system is ready to accept connections.*\\s"
+      - "test.Wait.forLogMessage.times=2"
+      - "test.log=true"
+      - "test.property.quarkus.datasource.jdbc.url=jdbc:postgresql://$${host:demo-db}:$${port:demo-db:5432}/demo?sslmode=disable"
+    ports:
+      - "5432:5432"
+    networks:
+      - test
+  dbimport:
+    container_name: dbimport
+    image: quay.io/tkit/dbimport:master
+    environment:
+      DB_URL: "jdbc:postgresql://demo-db:5432/demo?sslmode=disable"
+      DB_USERNAME: "demo"
+      DB_PASSWORD: "demo"
+    ports:
+      - "8811:8080"
+    labels:
+      - "test.Wait.forLogMessage.regex=.*Installed features:.*"
+      - "test.Wait.forLogMessage.times=1"
+      - "test.log=true"
+      - "test.property.tkit.test.dbimport.url=$${url:dbimport:8080}"
+  demo:
+    container_name: demo
+    image: demo:latest
+    ports:
+      - "8080:8080"
+    environment:
+      QUARKUS_TKIT_LOG_CONSOLE_JSON: "false"
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://demo-db:5432/demo?sslmode=disable"      
+    labels:
+      - "test.unit=false"
+      - "test.priority=200"
+      - "test.image.pull=DEFAULT"
+      - "test.Wait.forLogMessage.regex=.*Installed features:.*"
+      - "test.Wait.forLogMessage.times=1"
+      - "test.log=true"
+    networks:
+      - test
+networks:
+  test:
