@@ -1,4 +1,4 @@
-package com.capgemini.application.quarkus.sample.animalmanagement.service;
+package com.devonfw.application.quarkus.sample.animalmanagement.service.impl.rest;
 
 import java.util.List;
 import java.util.Random;
@@ -30,11 +30,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.tkit.quarkus.jpa.daos.PageResult;
 
-import com.capgemini.application.quarkus.sample.animalmanagement.common.api.Animal;
-import com.capgemini.application.quarkus.sample.animalmanagement.common.api.AnimalMapper;
-import com.capgemini.application.quarkus.sample.animalmanagement.logic.AnimalDAO;
-import com.capgemini.application.quarkus.sample.animalmanagement.logic.api.to.AnimalSearchCriteriaDTO;
-import com.capgemini.application.quarkus.sample.animalmanagement.logic.api.to.NewAnimalDTO;
+import com.devonfw.application.quarkus.sample.animalmanagement.common.api.AnimalMapper;
+import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal;
+import com.devonfw.application.quarkus.sample.animalmanagement.logic.api.to.AnimalSearchCriteriaDTO;
+import com.devonfw.application.quarkus.sample.animalmanagement.logic.api.to.NewAnimalDTO;
+import com.devonfw.application.quarkus.sample.animalmanagement.logic.impl.AnimalDAO;
 
 import io.micrometer.core.annotation.Counted;
 import lombok.extern.slf4j.Slf4j;

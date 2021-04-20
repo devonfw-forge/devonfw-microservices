@@ -1,4 +1,4 @@
-package com.capgemini.application.quarkus.sample.animalmanagement.logic;
+package com.devonfw.application.quarkus.sample.animalmanagement.logic.impl;
 
 import static org.tkit.quarkus.jpa.utils.QueryCriteriaUtil.wildcard;
 
@@ -18,9 +18,9 @@ import org.tkit.quarkus.jpa.daos.AbstractDAO;
 import org.tkit.quarkus.jpa.daos.Page;
 import org.tkit.quarkus.jpa.daos.PageResult;
 
-import com.capgemini.application.quarkus.sample.animalmanagement.common.api.Animal;
-import com.capgemini.application.quarkus.sample.animalmanagement.common.api.AnimalSearchCriteria;
-import com.capgemini.application.quarkus.sample.animalmanagement.common.api.Animal_;
+import com.devonfw.application.quarkus.sample.animalmanagement.common.api.AnimalSearchCriteria;
+import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal;
+import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal_;
 
 import io.micrometer.core.annotation.Counted;
 import io.opentracing.Tracer;

@@ -1,4 +1,4 @@
-package com.capgemini.application.quarkus.sample;
+package com.devonfw.application.quarkus.sample;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -16,7 +16,7 @@ import org.tkit.quarkus.rs.models.PageResultDTO;
 import org.tkit.quarkus.rs.models.RestExceptionDTO;
 import org.tkit.quarkus.test.WithDBData;
 
-import com.capgemini.application.quarkus.sample.animalmanagement.logic.api.to.AnimalDTO;
+import com.devonfw.application.quarkus.sample.animalmanagement.logic.api.to.AnimalDTO;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.common.mapper.TypeRef;

@@ -1,4 +1,4 @@
-package com.capgemini.application.quarkus.sample.animalmanagement.logic.api.to;
+package com.devonfw.application.quarkus.sample.animalmanagement.logic.api.to;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
