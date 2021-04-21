@@ -1,4 +1,4 @@
-package com.devonfw.application.quarkus.sample;
+package com.devonfw.application.quarkus.sample.general;
 
 import javax.ws.rs.core.Application;
 
