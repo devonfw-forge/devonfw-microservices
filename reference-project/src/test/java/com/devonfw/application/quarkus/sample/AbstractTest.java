@@ -1,4 +1,4 @@
-package com.capgemini.application.quarkus.sample;
+package com.devonfw.application.quarkus.sample;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.restassured.RestAssured;
