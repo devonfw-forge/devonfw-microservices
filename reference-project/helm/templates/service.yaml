@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: demo-quarkus
+  labels:
+    app: demo-quarkus
+spec:
+  # we expose port 8080 which load balances traffic to the pods and their internal port 8080
+  ports:
+    - name: http-port
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.pod.port }}
+# how to find the pods we are load balancing
+  selector:
+    app: demo-quarkus
+  type: ClusterIP
