@@ -1,0 +1,77 @@
+:toc: macro
+toc::[]
+:idprefix:
+:idseparator: -
+
+= Communication
+
+This section provides cross-cutting best practices for communication between services in larger IT application landscapes.
+Details how to implement this with specific libraries, or programming-languages are described in the individual stacks of devonfw.
+Here we only want to focus on the overall patterns on a higher level.
+
+First understand your problems, then choose which services you need and what information they need to exchange.
+After that make your choices where to use https://en.wikipedia.org/wiki/Remote_procedure_call[RPC] communication and where https://en.wikipedia.org/wiki/Event-driven_architecture[event-driven] or message-driven communication.
+Once that is clear make your choices on concrete protocols, products and libraries to use.
+Please note that there is no silver bullet - do not always apply https://en.wikipedia.org/wiki/Representational_state_transfer[REST] or always apply https://kafka.apache.org[kafka] just because you have heard some success stories about it.
+
+== RPC communication
+
+When it comes to RPC communication nowadays we immediately talk about HTTPS.
+The most common choice is https://en.wikipedia.org/wiki/Representational_state_transfer[REST] with https://www.json.org/[JSON] that prefectly works together with web browsers.
+However, please also consider other options especially for backend communication:
+
+* https://grpc.io/[gRPC] is an efficient, high performance RPC protocol
+* ...
+
+Protocols like https://en.wikipedia.org/wiki/SOAP[SOAP] or even RMI, Corba, etc. should be considered as legacy and discouraged.
+
+TODO: Service-Mesh
+
+== Messaging and eventing
+
+We do not even try to distinguish between _messaging_ and _eventing_.
+A message can be seen as an event and an event as a message.
+The nature of this communication style is that it is entirely assynchronous and the sender of the event or message does not have to know about the receipient(s).
+There can even be many receipients for the same event or message.
+Typically there is a central messaging system (event bus) that is all you need to know about to send and receive your events or messages.
+This leads to a very loose coupling of your services.
+While this adds flexibility it also can add quite some complexity to understand what is actually going on:
+Debugging and tracing the communication can get really hard.
+In the worst case you can loose control and end up with cyclic events triggering each other till eternity.
+However, when properly applied this communication style can make your architecture very powerful and extendable.
+
+One of the most common choices for such a messaging system is https://kafka.apache.org[kafka].
+
+== Contracts
+
+A communication contract is an structured document that defines the expected input and output of a service.
+
+There are two approaches to using contracts for communications:
+
+- *Contract first*: There is a design document that defines the formal contract of the communication and the code artefacts are derived with some tooling.
+- *Code first*: Code is written directly and documentation is generated from there.
+
+For enterprise development, contract first approach is preferred because improves communication between involved development teams. This contracts can serve to develop tests, mocks and working code automatically and to enforce validation on both client and server sides of the services.
+
+Contracts can be used both for synchronous or asynchronous communications, for example https://www.openapis.org/[Open Api] has become the standard for REST contracts and https://www.asyncapi.com/[Async Api] is growing in adoption for the asynchronous needs.
+
+
+
+
+== Links
+
+* https://solace.com/blog/experience-awesomeness-event-driven-microservices/[REST vs Messaging for Microservices]
+* https://github.com/knative/eventing/blob/master/docs/decisions/eventing-and-messaging.md[eventing and messaging]
+* https://developer.okta.com/blog/2020/01/22/kafka-microservices[Kafka Microservices]
+
+
+=== Implementation hints
+
+* REST:
+** https://github.com/devonfw/devon4j/blob/master/documentation/guide-rest.asciidoc[Java Server]
+** https://github.com/devonfw/devon4j/blob/master/documentation/guide-service-client.asciidoc[Java Client]
+** https://github.com/devonfw/devon4ng/blob/develop/documentation/guide-consuming-rest-services.asciidoc[Angular]
+** https://github.com/devonfw/devon4net/blob/develop/documentation/userguide.asciidoc#repositories-and-services[.NET/C#]
+** https://github.com/devonfw/devon4node/blob/develop/documentation/guides-swagger.asciidoc[node.js]
+* Kafka:
+** https://github.com/devonfw/devon4j/blob/master/documentation/guide-kafka.asciidoc[Java]

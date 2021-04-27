@@ -1,0 +1,43 @@
+= devonfw enterprise architecture
+:description: enterprise architecture blueprint of devonfw.
+:doctype: book
+:toc:
+:toc-title: Table of Contents
+:idprefix:
+:idseparator: -
+:sectnums:
+:reproducible:
+:source-highlighter: rouge
+:listing-caption: Listing
+:chapter-label:
+:partnums:
+:imagesdir: ./
+The devonfw community
+${project.version}, ${buildtime}
+
+
+http://www.devonfw.com/[_devonfw_] provides a solution to building applications which combine best-in-class frameworks and libraries as well as industry proven practices and code conventions.
+It massively speeds up development, reduces risks and helps you to deliver better results.
+
+The following sections contain blueprints and best practices to build application landscapes and shape a profound enterprise architecture.
+
+include::architecture.asciidoc[leveloffset=1]
+
+<<<<
+
+include::access-control.asciidoc[leveloffset=1]
+
+<<<<
+
+include::communication.asciidoc[leveloffset=1]
+
+<<<<
+
+include::monitoring.asciidoc[leveloffset=1]
+
+<<<<
+
+include::integration.asciidoc[leveloffset=1]
+
+<<<<
+
