@@ -1,0 +1,129 @@
+:toc: macro
+toc::[]
+
+Proposed approach for testing Devonfw Microservices(Quarkus based)
+
+== Goals
+We write tests to verify functionality of our apps as closely as possible to their real-world use. Therefore we prefer integration tests(on component level) to traditional unit tests with mocks.
+
+* We test Business features including the underlying framework, not only „our" code with mocked base layers 
+* Any service that relies on Database should be tested against the same type of database as used during real-world use
+* We test our app using its public API, if it exposes REST API then we test it by simulating client calls
+* We mock surounding systems on API level(so our app under tests does not need to be aware whether its talking to real partner or mock)
+
+== Unit tests vs Integration style tests
+
+.Testing approach
+image:/documentation/images/testing-approach.svg[
+"Testing Approach",width=512
+link="/documentation/images/testing-approach.svg"]
+
+When testing microservices based on high level frameworks, the traditional unit tests bring little value in terms of business feature verification. 
+
+* Usually the tests verify individual classes or methods, while mocking all its surroundings
+* Many features of our app are provided by framework layer(interceptors, filters...) which cant be mocked
+* If we use persistence but we mock DB layer, our tests cant verify that our app really works(e.g. constraints, transactions, validity of queries...)
+* When DI/IoC is used in app, then tests should use it as well, otherwise we are not verifying the correct setup of our app
+* When our app exposes HTTP/REST API, then we can only correctly verify it when we call it as client would(on actual HTTP level, not on Java level)
+
+Of course Unit tests on class level are very fast and are still useful for some scenarios: testing complex methods, algorithmic consistency, calculations or utility functions, testing many permutations of params, etc.
+
+
+*Integration style tests(component level)*
+
+With Quarkus its is easy and fast to test our app functionality as whole, very close to how it would be used in production: 
+
+* We test our app including the underlying framework and libraries
+* Required infrastructure services (such as DB, or Message broker...) are started during test setup
+* External systems(partners) are mocked on API level, for example via Wiremock
+* We can test our app as black box, without having to instrument it specifically for test
+* By testing on API level(calling our REST API like a real client) we are also verifying all udnerlying features(logic layer, dataaccess layer, config...)
+
+We can simplify the setup of the test env using docker & testcontainers.
+
+== Writing tests
+
+IMPORTANT: Read https://quarkus.io/guides/getting-started-testing[Quarkus docs on testing first]
+
+We will use the tkit-quarkus-test which extends the Quarkus tests to run the Testcontainers for unit tests.
+By providing `docker-compose.yaml` file under `/src/test/resources/` we can specify which services we want to start before our test execution.
+In the example bellow, we start postgresql and small native app dbimport that allows us to populate database with xls data.
+
+[source,yaml]
+----
+version: '3.9'
+services:
+  demo-db:
+    container_name: demo-db
+    image: postgres:11.5
+    environment:
+      POSTGRES_DB: "demo"
+      POSTGRES_USER: "demo"
+      POSTGRES_PASSWORD: "demo"
+    labels:
+      - "test.priority=90"
+      - "test.Wait.forLogMessage.regex=.*database system is ready to accept connections.*\\s"
+      - "test.Wait.forLogMessage.times=2"
+      - "test.log=true"
+      - "test.property.quarkus.datasource.jdbc.url=jdbc:postgresql://$${host:demo-db}:$${port:demo-db:5432}/demo?sslmode=disable"
+  dbimport:
+    container_name: dbimport
+    image: quay.io/tkit/dbimport:master
+    environment:
+      DB_URL: "jdbc:postgresql://demo-db:5432/demo?sslmode=disable"
+      DB_USERNAME: "demo"
+      DB_PASSWORD: "demo"
+    labels:
+      - "test.Wait.forLogMessage.regex=.*Installed features:.*"
+      - "test.Wait.forLogMessage.times=1"
+      - "test.log=true"
+      - "test.property.tkit.test.dbimport.url=$${url:dbimport:8080}"
+----
+
+[source,java]
+----
+@QuarkusTest //standard Quarkus test annotation
+@QuarkusTestResource(DockerComposeTestResource.class) //tkit-test extension
+class AnimalRestControllerTest {
+
+    @Test
+    // annotating class or method with @WithDBData allows us to scope data for each test even if we use the same DB
+    @WithDBData(value = "data/animal.xls", deleteBeforeInsert = true)
+    void getAll() {
+
+        Response response = given()
+          .when()
+          .get("/animals")
+          .then()
+          .statusCode(200)
+          .extract().response();
+
+        PageResultDTO<AnimalDTO> animalsReturned = response.as(new TypeRef<PageResultDTO<AnimalDTO>>() {
+        });
+
+        assertEquals(2, animalsReturned.getTotalElements());
+    }
+}
+----
+
+When run, tkit-test extension will first start all the docker containers we need, update Quarkus test configuration and then Quarkus will bootstrap our application.
+Our test invokes REST API of our app using RestAsurred client(remote HTTP call) so we are indeed testing real functionality of our app, including persistence and DI.
+Figure bellow illustrated the test execution sequence:
+
+
+.Testing with tkit-test & testcontainers
+image:/documentation/images/testing-setup.svg[
+"Testing Setup",width=512
+link="/documentation/images/testing-setup.svg"]
+
+== Testing in native mode
+
+The default test setup runs the tests agains a JVM build of our app. But as our test interact with the app via REST API, we can easily swap the app under test for a native build of our app - while reusing 100% of our test code. 
+
+
+== Links
+
+https://quarkus.io/guides/getting-started-testing[Quarkus Testing Guide]
+https://rest-assured.io/[Rest Assured]
+https://www.testcontainers.org/[Test containers]
+https://gitlab.com/1000kit/libs/quarkus/tkit-quarkus-test[tkit-test extension]
