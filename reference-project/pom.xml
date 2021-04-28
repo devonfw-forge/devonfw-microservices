@@ -2,7 +2,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.devonfw.quarkus.sample</groupId>
+  <groupId>com.devonfw</groupId>
   <artifactId>demo-quarkus</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <properties>
@@ -12,10 +12,10 @@
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus-plugin.version>1.12.0.Final</quarkus-plugin.version>
+    <quarkus-plugin.version>1.12.2.Final</quarkus-plugin.version>
     <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-    <quarkus.platform.version>1.12.0.Final</quarkus.platform.version>
+    <quarkus.platform.version>1.12.2.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
   </properties>
@@ -92,46 +92,7 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- 1000kit -->
-    <dependency>
-      <groupId>org.tkit.quarkus</groupId>
-      <artifactId>tkit-quarkus-rest</artifactId>
-      <version>2.4.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.tkit.quarkus</groupId>
-      <artifactId>tkit-quarkus-jpa</artifactId>
-      <version>2.3.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.tkit.quarkus</groupId>
-      <artifactId>tkit-quarkus-log-cdi</artifactId>
-      <version>1.4.5</version>
-    </dependency>
-    <dependency>
-      <groupId>org.tkit.quarkus</groupId>
-      <artifactId>tkit-quarkus-log-rs</artifactId>
-      <version>1.4.5</version>
-    </dependency>
-    <dependency>
-      <groupId>org.tkit.quarkus</groupId>
-      <artifactId>tkit-quarkus-log-json</artifactId>
-      <version>1.4.5</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.tkit.quarkus</groupId>
-      <artifactId>tkit-quarkus-test</artifactId>
-      <version>1.12.0</version>
-      <scope>test</scope>
-    </dependency>
-<!--Required because of breaking changes in lombok 1.18.16 -->
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok-mapstruct-binding</artifactId>
-      <version>0.2.0</version>
-      <scope>provided</scope>
-    </dependency>
+    <!-- Bean mapping via Mapstruct -->
     <dependency>
       <groupId>org.mapstruct</groupId>
       <artifactId>mapstruct-processor</artifactId>
@@ -143,6 +104,52 @@
       <artifactId>mapstruct</artifactId>
       <version>${mapstruct.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <!--Required because of breaking changes in lombok 1.18.16 -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok-mapstruct-binding</artifactId>
+      <version>0.2.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- 1000kit extensions-->
+    <dependency>
+      <groupId>org.tkit.quarkus</groupId>
+      <artifactId>tkit-quarkus-rest</artifactId>
+      <version>2.4.0</version>
+    </dependency>
+    <!-- Abstract Entities, DAOs, paging queries... -->
+    <dependency>
+      <groupId>org.tkit.quarkus</groupId>
+      <artifactId>tkit-quarkus-jpa</artifactId>
+      <version>2.4.0</version>
+    </dependency>
+    <!-- Business method logger... -->
+    <dependency>
+      <groupId>org.tkit.quarkus</groupId>
+      <artifactId>tkit-quarkus-log-cdi</artifactId>
+      <version>1.4.5</version>
+    </dependency>
+    <!-- REST communication logger.. -->
+    <dependency>
+      <groupId>org.tkit.quarkus</groupId>
+      <artifactId>tkit-quarkus-log-rs</artifactId>
+      <version>1.4.5</version>
+    </dependency>
+    <!-- Extended structured JSON logger -->
+    <dependency>
+      <groupId>org.tkit.quarkus</groupId>
+      <artifactId>tkit-quarkus-log-json</artifactId>
+      <version>1.4.5</version>
+    </dependency>
+
+    <!-- Component level integration tests -->
+    <dependency>
+      <groupId>org.tkit.quarkus</groupId>
+      <artifactId>tkit-quarkus-test</artifactId>
+      <version>1.12.0</version>
+      <scope>test</scope>
     </dependency>
 
     <!--Testing -->

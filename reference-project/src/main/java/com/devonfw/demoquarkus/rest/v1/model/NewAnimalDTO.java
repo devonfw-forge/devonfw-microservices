@@ -1,4 +1,4 @@
-package com.devonfw.application.quarkus.sample.animalmanagement.logic.api.to;
+package com.devonfw.demoquarkus.rest.v1.model;
 
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;

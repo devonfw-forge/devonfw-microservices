@@ -1,4 +1,4 @@
-package com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api;
+package com.devonfw.demoquarkus.domain.model;
 
 import javax.persistence.Entity;
 
