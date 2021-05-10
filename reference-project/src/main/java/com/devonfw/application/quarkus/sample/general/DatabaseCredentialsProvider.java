@@ -14,7 +14,7 @@ public class DatabaseCredentialsProvider implements CredentialsProvider {
 
   String DB_USER_PROPERTY_VARIABLE = "QUARKUS_DATASOURCE_USERNAME";
 
-  String DB_PASSWORD_PROPERTY_VARIABLE = "QUARKUS_DATASOURCE_USERNAME";
+  String DB_PASSWORD_PROPERTY_VARIABLE = "QUARKUS_DATASOURCE_PASSWORD";
 
   @Override
   public Map<String, String> getCredentials(String credentialsProviderName) {

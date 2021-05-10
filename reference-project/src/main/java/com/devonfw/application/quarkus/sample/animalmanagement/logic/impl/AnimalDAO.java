@@ -13,7 +13,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import org.eclipse.microprofile.opentracing.Traced;
+//import org.eclipse.microprofile.opentracing.Traced;
 import org.tkit.quarkus.jpa.daos.AbstractDAO;
 import org.tkit.quarkus.jpa.daos.Page;
 import org.tkit.quarkus.jpa.daos.PageResult;
@@ -23,7 +23,6 @@ import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.An
 import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal_;
 
 import io.micrometer.core.annotation.Counted;
-import io.opentracing.Tracer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -32,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @ApplicationScoped
 @Slf4j
 // add all operations on this bean to tracer
-@Traced
+//@Traced
 // extending AbstractDAO gives us CRUD for free
 public class AnimalDAO extends AbstractDAO<Animal> {
 
@@ -40,8 +39,8 @@ public class AnimalDAO extends AbstractDAO<Animal> {
   EntityManager em;
 
   // you can inject current tracer instance like any other bean
-  @Inject
-  Tracer tracer;
+  //@Inject
+  //Tracer tracer;
 
   @Counted(value = "metric.searchByCriteria", description = "Number of times Dao.searchByCriteria was called", extraTags = {
   "extra", "tag" })
@@ -66,7 +65,7 @@ public class AnimalDAO extends AbstractDAO<Animal> {
       cq.where(predicates.toArray(new Predicate[0]));
     }
     // we can add useful info to our span
-    this.tracer.activeSpan().setTag("predicates", predicates.size()).setTag("layer", "dao");
+    //this.tracer.activeSpan().setTag("predicates", predicates.size()).setTag("layer", "dao");
     // tkit jpa allows to simply convert existing query to paged query
     return createPageQuery(cq, Page.of(criteria.getPageNumber(), criteria.getPageSize())).getPageResult();
   }
