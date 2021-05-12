@@ -16,8 +16,7 @@ services:
 
   # Collector
   otel-collector:
-    image: otel/opentelemetry-collector:0.16.0
-#    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector-dev:latest
     command: ["--config=/conf/otel-collector-config.yaml", "--log-level=DEBUG"]
     volumes:
       - ./otel-collector-config.yaml:/conf/otel-collector-config.yaml
@@ -46,7 +45,7 @@ services:
       - "14250"
 
   otel-agent:
-    image: otel/opentelemetry-collector-dev:117cf7a5a6159f3ebd43edab1ee10d2bb4234e26
+    image: otel/opentelemetry-collector-dev:latest
     command: ["--config=/etc/otel-agent-config.yaml", "--log-level=DEBUG"]
     volumes:
       - ./otel-agent-config.yaml:/etc/otel-agent-config.yaml
@@ -63,16 +62,45 @@ services:
     depends_on:
       - otel-collector
 
-  prometheus:
-    image: prom/prometheus:latest
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent
+    depends_on:
+      - "victoriametrics"
     ports:
-      - 9090:9090
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
+      - 8429:8429
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./vMetrics.yaml:/etc/victoriametrics/vMetrics.yml
+    command:
+      - '--promscrape.config=/etc/victoriametrics/vMetrics.yml'
+      - '--remoteWrite.url=http://victoriametrics:8428/api/v1/write'
     networks:
       - demo
+
+  victoriametrics:
+    container_name: victoriametrics
+    image: victoriametrics/victoria-metrics
+    ports:
+      - 8428:8428
+      - 8089:8089
+      - 8089:8089/udp
+      - 2003:2003
+      - 2003:2003/udp
+      - 4242:4242
+    command:
+      - --promscrape.config=/etc/victoriametrics/vMetrics.yml
+    volumes:
+      - ./vMetrics.yaml:/etc/victoriametrics/vMetrics.yml:ro
+    networks:
+      - demo
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
 
 networks:
   demo:

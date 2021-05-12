@@ -23,6 +23,8 @@ import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.An
 import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal_;
 
 import io.micrometer.core.annotation.Counted;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.extension.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -39,9 +41,10 @@ public class AnimalDAO extends AbstractDAO<Animal> {
   EntityManager em;
 
   // you can inject current tracer instance like any other bean
-  //@Inject
-  //Tracer tracer;
+  @Inject
+  Tracer tracer;
 
+  @WithSpan
   @Counted(value = "metric.searchByCriteria", description = "Number of times Dao.searchByCriteria was called", extraTags = {
   "extra", "tag" })
   public PageResult<Animal> searchByCriteria(AnimalSearchCriteria criteria) {
@@ -69,8 +72,9 @@ public class AnimalDAO extends AbstractDAO<Animal> {
     // tkit jpa allows to simply convert existing query to paged query
     return createPageQuery(cq, Page.of(criteria.getPageNumber(), criteria.getPageSize())).getPageResult();
   }
-
+  
   // return a list of animals
+  @WithSpan
   public List<Animal> getAll() {
 
     // we construct a query using JPQL/HQL, tell JPA that rows are of type Animal and we ask for list
