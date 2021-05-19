@@ -13,7 +13,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-//import org.eclipse.microprofile.opentracing.Traced;
 import org.tkit.quarkus.jpa.daos.AbstractDAO;
 import org.tkit.quarkus.jpa.daos.Page;
 import org.tkit.quarkus.jpa.daos.PageResult;
@@ -23,6 +22,7 @@ import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.An
 import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal_;
 
 import io.micrometer.core.annotation.Counted;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.extension.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +32,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @ApplicationScoped
 @Slf4j
-// add all operations on this bean to tracer
-//@Traced
 // extending AbstractDAO gives us CRUD for free
 public class AnimalDAO extends AbstractDAO<Animal> {
 
@@ -67,8 +65,10 @@ public class AnimalDAO extends AbstractDAO<Animal> {
     if (!predicates.isEmpty()) {
       cq.where(predicates.toArray(new Predicate[0]));
     }
+    
     // we can add useful info to our span
-    //this.tracer.activeSpan().setTag("predicates", predicates.size()).setTag("layer", "dao");
+    Span span = Span.current();
+    span.setAttribute("predicates", predicates.size()).setAttribute("layer", "dao");
     // tkit jpa allows to simply convert existing query to paged query
     return createPageQuery(cq, Page.of(criteria.getPageNumber(), criteria.getPageSize())).getPageResult();
   }
@@ -76,6 +76,10 @@ public class AnimalDAO extends AbstractDAO<Animal> {
   // return a list of animals
   @WithSpan
   public List<Animal> getAll() {
+
+    // we can add useful info to our span
+    Span span = Span.current();
+    span.setAttribute("layer", "dao");
 
     // we construct a query using JPQL/HQL, tell JPA that rows are of type Animal and we ask for list
     return this.em.createQuery("select a from Animal a", Animal.class).getResultList();
