@@ -95,8 +95,13 @@ k3d cluster create -c k8s/dev.yaml
 Package your app as docker container and push to local k3d registry:
 > **_NOTE:_**  Be sure to package your app as native before
 ```shell
-docker build -f src/docker/Dockerfile.jvm . -t k3d-registry:5000/demo-quarkus:latest
+docker build -f src/main/docker/Dockerfile.jvm . -t k3d-registry:5000/demo-quarkus:latest
 docker push k3d-registry:5000/demo-quarkus:latest
+```
+
+If `push` fails because of unresolved host, you can add it manually (`c:\windows\system32\drivers\etc\hosts` on Windows or `/etc/hosts` on Linux)
+```shell
+127.0.0.1 k3d-registry
 ```
 
 Then apply the k8s resources to your cluster(make sure your kubectl has the correct context first)
@@ -120,6 +125,12 @@ helm dependency update helm/
 ```
 
 Deploy helm chart in the k8s cluster
+> **_NOTE:_**  Be sure to remove your old resources
+```shell
+kubectl delete Service demo-quarkus
+kubectl delete Deployment demo-quarkus
+kubectl delete Ingress demo-quarkus
+```
 ```
 helm install demo-quarkus ./helm
 helm list
