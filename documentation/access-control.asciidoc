@@ -1,0 +1,54 @@
+:toc: macro
+toc::[]
+:idprefix:
+:idseparator: -
+
+= Access-Control
+
+This section provides cross-cutting best practices for authentication and authorization in larger IT application landscapes.
+Details how to implement this with specific protocols, libraries, or programming-languages are described in the individual stacks of devonfw.
+Here we only want to focus on the overall patterns on a higher level.
+
+== Authentiction
+
+In large IT landscapes it is a highly recommended best-practice to centralize your authentication.
+Implemeting the actual authentication into every application or service is therefore considered as an anti-pattern.
+Instead we suggest to follow these best practices:
+
+* Use a central _identity and access management_ (IAM) based on an established product (e.g. https://www.keycloak.org/[keycloak]).
+* All incoming traffic of users goes via a gateway that acts as a reverse proxy to your actual services.
+* That gateway is responsible for authentication by integrating with your IAM (e.g. using https://webauthn.io/[WebAuthn], https://openid.net/connect/[OpenId Connect] or https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html[SAMLv2]).
+* After successful authentication the gatway retrieves the roles/groups of the user and creates a https://jwt.io/[JOSN Web Token] (JWT) that is signed with a strong asymmetric security algorithm.
+* The private key is only available on the gateway(s) and key-pairs are unique per environment (DTAP).
+* Then the original incoming request is forwarded to the actual service and the JWT is added as https://tools.ietf.org/html/rfc6750[Bearer Token via HTTP header according to OAuth standard].
+* Services are implemented stateless and only accept requests with valid JWT from gateway. Therefore they validate signature using the gateways public key and check validity (`nbf`, `ext`, `iat`).
+* When one of your services invokes another service it simply passes on the JWT via HTTP header. This way all sub-sequent invocations happen within the context and with the permissions of the initial user.
+* Your gateway should also act as portal integrating the UIs of your microservices so the end-users will not notice which UI comes from which service but has the user experience (UX) of a single monolithic UI.
+
+Benefits of this approach:
+
+* Decoupling from IAM with no vendor-lock in.
+* All services are independent from your actual authentication and IAM.
+* You can change your authentication (e.g. replace it with https://webauthn.io/[WebAuthn] or add https://en.wikipedia.org/wiki/Multi-factor_authentication[2FA]) without even touching any of your services but only do changes in your gateway(s).
+* For large and complex IT landscapes there may be different requirements for authentication by different _channels_ (e.g. to authenticate internal users via https://en.wikipedia.org/wiki/SPNEGO[SPNEGO] and external users via https://webauthn.io/[WebAuthn]). In such case you can simply dervice multiple variants of your gateway for each channel with different endpoint URLs.
+
+=== Conventions
+
+We recommend the following conventions:
+
+* Define a short but expressive unique alphanumerical identifier for each of your services (`«app-id»`).
+* Estabilish a clear URL schema for accesing your apps such as https://gateway.company.con/«app-id»/...
+* Use a cloud infrastructure platform that allows to manage an overlay network so you can configure loadbalancers or even https://platform9.com/blog/kubernetes-service-mesh-a-comparison-of-istio-linkerd-and-consul/[service-mesh] mapping your service entry points to a consistent URL schema such as https://«app-id»:8443/«app-id»/...
+* This way you do not need any configuration or business knowledge inside your gateway as the routing can be implemented fully generic.
+* Use `«app-id».` as a prefix to all permission groups/roles specific to your service to avoid name clashing in your central IAM.
+
+=== Implementation hints
+
+* https://github.com/devonfw-forge/portal-gateway[Portal-Gateway]
+* JWT Authentication: 
+** https://github.com/devonfw/devon4j/blob/master/documentation/guide-jwt.asciidoc[Java]
+** https://github.com/devonfw/devon4ng/blob/develop/documentation/guide-consuming-rest-services.asciidoc#token-management[Angular]
+** https://github.com/devonfw/devon4net/blob/develop/documentation/userguide.asciidoc#jwt-module[.NET/C#]
+** https://github.com/devonfw/devon4node/blob/develop/documentation/guides-auth-jwt.asciidoc[node.js]
+* Access-Control:
+** https://github.com/devonfw/devon4j/blob/master/documentation/guide-access-control.asciidoc[Java]

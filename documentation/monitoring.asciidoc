@@ -1,0 +1,33 @@
+:toc: macro
+toc::[]
+:idprefix:
+:idseparator: -
+
+= Monitoring
+
+TODO
+
+== Log-Monitoring
+
+The idea is to establish a central log-monitoring service in your environment as a sink for all your logs.
+Stop writing logfiles to the local filesystem!
+Instead write them to standard out (as JSON) and let your infrastructure feed the logs of all your containers automatically into that central log-monitoring.
+The log-monitoring will offer a web-interface for admins allowing full-text search on all log-files of your application landscape.
+Further, it offers dashboards to monitor the health of your application landscape according to various metrics from your logs.
+
+Common products for log-monitoring are:
+
+* https://www.elastic.co/de/what-is/elk-stack[ELK Stack]
+* https://www.graylog.org/[graylog]
+* https://www.splunk.com/[splunk]
+
+Standards your services should implement to get the most out of log-monitoring:
+
+* https://opentelemetry.io/[OpenTelemetry]
+* Log to standard out in JSON format as described in https://timber.io/blog/collecting-application-logs-on-kubernetes/[here]
+
+== Implementation hints
+
+* Logging:
+** https://github.com/devonfw/devon4j/blob/master/documentation/guide-logging.asciidoc[Java]
+** https://github.com/devonfw/devon4net/blob/develop/documentation/userguide.asciidoc#logging-module[.NET/C#] 

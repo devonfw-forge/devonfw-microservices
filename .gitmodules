@@ -1,0 +1,3 @@
+[submodule "modules/tkit-quarkus-log"]
+	path = modules/tkit-quarkus-log
+	url = https://gitlab.com/1000kit/libs/quarkus/tkit-quarkus-log.git
