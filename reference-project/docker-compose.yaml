@@ -1,8 +1,22 @@
 version: "3"
 
 services:
+  # reference-project:
+  #   #replace with your own image
+  #   image: devon-microservices/reference-project:latest
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     quarkus.datasource.jdbc.url: jdbc:postgresql://postgresdb:5432/demo
+  #     quarkus.opentelemetry.tracer.exporter.jaeger.endpoint: http://otel-agent:14250
+  #     QUARKUS_DATASOURCE_USERNAME: demo
+  #     QUARKUS_DATASOURCE_PASSWORD: demo
+  #   networks:
+  #     - demo
+  
   postgresdb:
     image: postgres:11.5
+    container_name: postgresdb
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_USER: demo
@@ -30,12 +44,16 @@ services:
     depends_on:
       - jaeger-all-in-one
       - zipkin-all-in-one
+    networks:
+      - demo
 
   # Zipkin
   zipkin-all-in-one:
     image: openzipkin/zipkin:latest
     ports:
       - "9411:9411"
+    networks:
+      - demo
 
   jaeger-all-in-one:
     image: jaegertracing/all-in-one:latest
@@ -43,6 +61,8 @@ services:
       - "16686:16686"
       - "14268"
       - "14250"
+    networks:
+      - demo
 
   otel-agent:
     image: otel/opentelemetry-collector-dev:latest
@@ -61,6 +81,8 @@ services:
       - "13133"       # health_check
     depends_on:
       - otel-collector
+    networks:
+      - demo
 
   vmagent:
     container_name: vmagent
@@ -101,6 +123,8 @@ services:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    networks:
+      - demo
 
 networks:
   demo:

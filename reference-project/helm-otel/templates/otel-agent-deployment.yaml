@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe
+      convert -c
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: otel-agent
+  name: otel-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: otel-agent
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe
+          convert -c
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/demo: "true"
+        io.kompose.service: otel-agent
+    spec:
+      containers:
+      - args:
+        - --config=/conf/agent.yaml
+        - --log-level=DEBUG
+        image: otel/opentelemetry-collector-dev:latest
+        imagePullPolicy: ""
+        name: otel-agent
+        ports:
+        - containerPort: 8888
+        - containerPort: 14250
+        - containerPort: 14268
+        - containerPort: 55678
+        - containerPort: 4317
+        - containerPort: 9411
+        - containerPort: 1777
+        - containerPort: 13133
+        resources: {}
+        volumeMounts:
+        - mountPath: /conf
+          name: agent-config
+      volumes:
+      - configMap:
+          items:
+          - key: agent.yaml
+            path: agent.yaml
+          name: agent-config
+        name: agent-config
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}
