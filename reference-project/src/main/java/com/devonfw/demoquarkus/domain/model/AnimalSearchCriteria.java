@@ -1,4 +1,4 @@
-package com.devonfw.application.quarkus.sample.animalmanagement.common.api;
+package com.devonfw.demoquarkus.domain.model;
 
 import lombok.Getter;
 import lombok.Setter;

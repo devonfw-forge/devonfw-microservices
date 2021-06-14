@@ -1,4 +1,4 @@
-package com.devonfw.application.quarkus.sample.animalmanagement.logic.api.to;
+package com.devonfw.demoquarkus.rest.v1.model;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
@@ -21,6 +21,6 @@ public class AnimalSearchCriteriaDTO {
   private int pageNumber = 0;
 
   @QueryParam("size")
-  @DefaultValue("100")
-  private int pageSize = 100;
+  @DefaultValue("10")
+  private int pageSize = 10;
 }

@@ -1,4 +1,4 @@
-package com.devonfw.application.quarkus.sample.animalmanagement.logic.impl;
+package com.devonfw.demoquarkus.domain.dao;
 
 import static org.tkit.quarkus.jpa.utils.QueryCriteriaUtil.wildcard;
 
@@ -13,27 +13,29 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.devonfw.demoquarkus.domain.model.AnimalSearchCriteria;
+import com.devonfw.demoquarkus.domain.model.Animal;
+import com.devonfw.demoquarkus.domain.model.Animal_;
+import io.micrometer.core.annotation.Timed;
 import org.eclipse.microprofile.opentracing.Traced;
 import org.tkit.quarkus.jpa.daos.AbstractDAO;
 import org.tkit.quarkus.jpa.daos.Page;
 import org.tkit.quarkus.jpa.daos.PageResult;
-
-import com.devonfw.application.quarkus.sample.animalmanagement.common.api.AnimalSearchCriteria;
-import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal;
-import com.devonfw.application.quarkus.sample.animalmanagement.dataaccess.api.Animal_;
 
 import io.micrometer.core.annotation.Counted;
 import io.opentracing.Tracer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Our Animal DAO(Data access object) We mark it as Applicationscoped - single instance for app
+ * Our Animal DAO(Data access object).
+ * We mark it as Applicationscoped - single instance for app
  */
 @ApplicationScoped
 @Slf4j
 // add all operations on this bean to tracer
 @Traced
 // extending AbstractDAO gives us CRUD for free
+@Timed
 public class AnimalDAO extends AbstractDAO<Animal> {
 
   @Inject
@@ -44,7 +46,7 @@ public class AnimalDAO extends AbstractDAO<Animal> {
   Tracer tracer;
 
   @Counted(value = "metric.searchByCriteria", description = "Number of times Dao.searchByCriteria was called", extraTags = {
-  "extra", "tag" })
+  "layer", "domain" })
   public PageResult<Animal> searchByCriteria(AnimalSearchCriteria criteria) {
 
     if (criteria == null) {
@@ -66,24 +68,9 @@ public class AnimalDAO extends AbstractDAO<Animal> {
       cq.where(predicates.toArray(new Predicate[0]));
     }
     // we can add useful info to our span
-    this.tracer.activeSpan().setTag("predicates", predicates.size()).setTag("layer", "dao");
+    this.tracer.activeSpan().setTag("predicates", predicates.size()).setTag("layer", "domain");
     // tkit jpa allows to simply convert existing query to paged query
     return createPageQuery(cq, Page.of(criteria.getPageNumber(), criteria.getPageSize())).getPageResult();
   }
-
-  // return a list of animals
-  public List<Animal> getAll() {
-
-    // we construct a query using JPQL/HQL, tell JPA that rows are of type Animal and we ask for list
-    return this.em.createQuery("select a from Animal a", Animal.class).getResultList();
-  }
-
-  // we dont need the basic crud methods when using tkit jpa
-  // Writing to DB(create, update, delete) requires a transaction -we got one automatically because of @Transactional
-  // em.persist modifies the instance we passed by ref, so no need to return
-  // @Transactional
-  // public void persist(Animal newAnimal) {
-  // em.persist(newAnimal);
-  // }
 
 }

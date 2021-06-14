@@ -1,0 +1,129 @@
+
+
+== Basic package structure recommendation
+
+Scope: Backend microservices providing HTTP/RESTful API.
+
+=== Goals
+
+* clear naming, good for 90% of cases, flexible for the remaining 10%
+* focus on single componemt, single domain case, backend only, no mixed responsibilities
+* standard-size microservice should fit its package structure on single screen, names should be easy on the eyes
+* introduce complexity progresively, if required
+* pragmatic and productive, recommendations not rules
+
+
+`«group».«artifact»[.«component»].«layer»[.«type»]*`
+
+.Segments of package schema
+[options="header"]
+|=============================================
+| *Segment*      | *Description* | *Example*
+| «group» | Matches your maven `groupId` coordinate, basic name-space of the organization or IT project owning the code. Corresponds to domain name reversed. |`com.devonfw`
+| «artifact» | Matches your maven `artifact` coordinate, converted to java package conventions(e.g. `-` omitted). Can be further simplified if it does not cause disambiguity(e.g. `presales-order-bff`-> `pobff`) | `orderservice`, `usermgmt`..
+| «component» | Only used if the service serves multiple business components. Most microservices usually address a single business component/domain. In this case it is ommited(its already implied by the artifactid)| `users`, `order`
+| «layer» | The name of the technical layer (See link:architecture.asciidoc[technical architecture]) which is one of the predefined layers (`domain`, `rest`, `logic`) or `common` for code not assigned to a technical layer (datatypes, cross-cutting concerns). Additional layers can be introduced if they have clear scope e.g. `batch`, `process`.. | `rest`
+| «type» | Further division based on common stereotypes based on type of component. Suggested stereotypes for `rest` layer are [`controller`, `model`, `mapper`, `filter`..] for `domain` layer: [`model`, `dao`]  | `dao`
+|=============================================
+
+For a typical backend MS that provides HTTP API and data persistence via JPA in the business domain `serviceorder` the structure would be something like this: 
+
+[subs=+macros]
+----
+«group».«artifact»
+├──.domain
+|  ├──.dao
+|  |  ├──ServiceOrderDAO
+|  |  └──ServiceOrderItemDAO
+|  ├──.model
+|  |  ├──ServiceOrderEntity
+|  |  └──ServiceOrderItemEntity
+├──.logic
+|  ├──NewServiceOrderValidator
+|  └──ServiceOrderEventsEmitter
+└──.rest
+   ├──.controller
+   |  └──ServiceOrderRestController
+   ├──.mapper
+   |  └──ServiceOrderMapper
+   └──.model
+      ├──NewServiceOrderDTO
+      ├──ServiceOrderPageResutltDTO
+      └──ServiceOrderDTO
+----
+
+You add layes as required(a typical CRUD style microservice does not need logic layer 90% of the time) based on business needs(if your service integrations with BPM engine, add `process` layer, if you run batch jobs, add `batch` layer...)
+
+== Class naming recommendations
+
+* Class name should be descriptive and concise(with descriptivenss having higher prio)
+* Class name should indicate the type of object it represents 
+* All classes in single «type» package should have the same naming structure (e.g. dont mix `EntityRepo` and `OtherEntityDAO` inside `dao` package)
+
+== Data access layer
+
+When using JPA/Hibernate for data persistence, please use the following `type` subpackages under your `domain` package:
+
+`dao` - for all your Data Access Objects (aka repositories). The naming should be always `«entity»DAO`
+`model` - for all entities, views or other objects used to read and write to DB.
+
+== Logic layer
+
+Use the layer to provide any microservice specific business logic, addin subpackages as needed, depending on the type of number of classes required. 
+Before itroduction of a new service, check whether is really required, or if it could be replaced by standard/framework solution(e.g. validators can in 90% of cases be covered by bean validation spec, using annotations on models).
+Strive for clear naming, based on the scope of the class, instead of generic names e.g. BAD: `OrderService`, `EmailManagement`, BETTER: `OrderValidator`, `EmailSender`
+
+
+== REST layer 
+
+Depending on the requirements of the project, a service may expose multiple APIs e.g. a fixed version, public API that must stay strictly backwards compatible and a separate non-public API used for internal features or ops. Often the app will need to provide multiple public API versions.
+If this is the case, we suggest to introduce `«version»` as intermediate package:
+
+[subs=+macros]
+----
+└──.rest
+   ├──internal
+   |  ├──.controller
+   |  |  ├──AdminOperationsRestController
+   |  |  └──EventRestController
+   |  ├──.mapper
+   |  |  └──AdminOperationMapper
+   |  └──.model
+   |     ├──EventDTO
+   |     ├──AdminOperationDTO
+   |     └──AdminOperationResultDTO
+   ├──v1
+   |  ├──.controller
+   |  |  └──ServiceOrderRestController
+   |  ├──.mapper
+   |  |  └──ServiceOrderMapper
+   |  └──.model
+   |     ├──NewServiceOrderDTO
+   |     ├──ServiceOrderPageResutltDTO
+   |     └──ServiceOrderDTO
+   └──v2
+      ├──.controller
+      |  ├──ServiceOrderItemRestController
+      |  └──ServiceOrderRestController
+      ├──.mapper
+      |  └──ServiceOrderMapper
+      ├──.filter
+      |   └──CustomPayloadFilter
+      └──.model
+         ├──NewServiceOrderDTO
+         ├──ServiceOrderItemDTO
+         ├──ServiceOrderPageResutltDTO
+         ├──ServiceOrderPatchRequestDTO
+         └──ServiceOrderDTO
+   
+----
+
+
+=== Use of mappers
+
+For most real-world microservices, we dont want to expose our internal domain model as API model (it might not even be possible, e.g. due to bidirectional associations in JPA).
+The introduction of separate API level model will require a mapping of some sorts between domain model and API model - commonly referred to as Bean mapping. 
+Recommendation is to use a well-established library/tool for this task, based on preferences of the team. Two frameworks that we have extensively used in production are Mapstruct or Orika. 
+
+
+
