@@ -77,6 +77,7 @@ Things to be discussed and aligned:
 * Spring-data vs. `Dao`s. In devon4j we started with `Dao`s and later introduced spring-data because many developers wanted to have this as an improvement and convinced to make it the new first-class citizen and keeping `Dao`s only as legacy support (https://github.com/devonfw/devon4j/blob/master/documentation/guide-jpa.asciidoc#repositories-and-daos[]).
 * Structure of `logic` layer? I am more than happy to drop the ugly https://github.com/devonfw/devon4j/blob/master/documentation/guide-component-facade.asciidoc[component facades] from devon4j and never liked them for their cyclic dependencies. However, what is with our "use-cases" and how is the new structure? This is still a little unclear to me...
 * Bean-Mapping - see https://github.com/devonfw-forge/devonfw-microservices/issues/8
+* Lombok usage - see https://github.com/devonfw-forge/devonfw-microservices/issues/29
 
 == Class naming recommendations
 
