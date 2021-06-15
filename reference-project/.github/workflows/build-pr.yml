@@ -1,0 +1,21 @@
+name: CI Build PR
+on: pull_request
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - name: Start containers
+        run: docker-compose -f "docker-compose.yml" up -d --build
+      - name: Build project with Maven in Quarkus
+        run: mvn compile
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f "docker-compose.yml" down
