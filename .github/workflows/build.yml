@@ -14,9 +14,9 @@ jobs:
         with:
           java-version: '11'
       - name: Start containers
-        run: docker-compose -f reference-project/docker-compose.yml up -d
+        run: docker-compose -f reference-project/docker-compose.yaml up -d
       - name: Build project with Maven in Quarkus
         run: mvn compile
       - name: Stop containers
         if: always()
-        run: docker-compose -f reference-project/docker-compose.yml down
+        run: docker-compose -f reference-project/docker-compose.yaml down
