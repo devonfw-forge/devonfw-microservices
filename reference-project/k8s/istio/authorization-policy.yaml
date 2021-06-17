@@ -1,0 +1,34 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt
+  namespace: default
+spec:
+  jwtRules:
+  - issuer: "http://keycloak-demo-quarkus.localhost/auth/realms/demo-quarkus"
+    jwksUri: "http://keycloak.default:8080/auth/realms/demo-quarkus/protocol/openid-connect/certs"
+  selector:
+    matchLabels:
+      app: demo-quarkus
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: require-jwt
+spec:
+  selector:
+    matchLabels:
+      app: demo-quarkus
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        # TODO issuer/sub (sub is userid of user demo)
+        requestPrincipals: ["*"]
+    to:
+      - operation:
+          paths: [ "/animals"]
+  - to:
+    # The 2nd rule doesn't have `from` allowing any access (without JWT)
+    - operation:
+        paths: [ "/q/health/ready"]
