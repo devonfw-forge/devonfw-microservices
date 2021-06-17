@@ -6,7 +6,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -14,7 +13,7 @@ jobs:
       - name: Start containers
         run: docker-compose -f reference-project/docker-compose.yaml up -d
       - name: Build project with Maven in Quarkus
-        run: mvn compile
+        run: mvn compile --file reference-project/pom.xml
       - name: Stop containers
         if: always()
         run: docker-compose -f reference-project/docker-compose.yaml down
