@@ -23,7 +23,7 @@ Below is table containing overview of different features:
 |Sync and Async|	Yes|	Yes|
 |Simple usage|	Yes|	Yes|
 |Flexible Configuration|	Yes|	Yes|
-|Other Extensions|	Supports Microprofile REST Client,<br> RESTEasy, VertX HTTP Client,<br> Reactive JAX-RS rest client|	No as of now,<br> yet would like to confirm|
+|Other Extensions|	Supports Microprofile REST Client,<br> RESTEasy, VertX HTTP Client,<br> Reactive JAX-RS rest client|	|
 |Headers|	Yes|	Yes|
 |Multipart|	Yes|  |	
 |Service Discovery|    |		Yes|
