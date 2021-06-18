@@ -46,7 +46,7 @@ Go to http://localhost:8080/animals
 
 ## OpenAPI & Swagger UI
 
-With your app running, go to [http://localhost:8080/q/swagger-ui]() to see the Swagger UI visualizing your API. You can access the YAML OpenAPI schema under [http://localhost:8080/q/openapi]()
+With your app running, go to http://localhost:8080/q/swagger-ui to see the Swagger UI visualizing your API. You can access the YAML OpenAPI schema under http://localhost:8080/q/openapi
 
 ## Packaging and running the application
 
@@ -76,7 +76,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./mvnw package -Pnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/quarkus-basics-1.0.0-SNAPSHOT-runner`
+You can then execute your native executable with: `./target/demo-quarkus-1.0.0-SNAPSHOT-runner`
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.html.
 
@@ -86,10 +86,22 @@ It is recommended to use vanilla maven settings(no custom mirror, proxy) for bet
 
 ## Deploy to kubernetes
 
-Package your app as docker container and push to local k3d registry:
+Create your k3d cluster and registry
 ```shell
-docker build -f src/docker/Dockerfile.jvm . -t k3d-registry:5000/demo-quarkus:latest
+k3d registry create registry --port 5000
+k3d cluster create -c k8s/dev.yaml
+```
+
+Package your app as docker container and push to local k3d registry:
+> **_NOTE:_**  Be sure to package your app as native before
+```shell
+docker build -f src/main/docker/Dockerfile.jvm . -t k3d-registry:5000/demo-quarkus:latest
 docker push k3d-registry:5000/demo-quarkus:latest
+```
+
+If `push` fails because of unresolved host, you can add it manually (`c:\windows\system32\drivers\etc\hosts` on Windows or `/etc/hosts` on Linux)
+```shell
+127.0.0.1 k3d-registry
 ```
 
 Then apply the k8s resources to your cluster(make sure your kubectl has the correct context first)
@@ -113,6 +125,12 @@ helm dependency update helm/
 ```
 
 Deploy helm chart in the k8s cluster
+> **_NOTE:_**  Be sure to remove your old resources
+```shell
+kubectl delete Service demo-quarkus
+kubectl delete Deployment demo-quarkus
+kubectl delete Ingress demo-quarkus
+```
 ```
 helm install demo-quarkus ./helm
 helm list
