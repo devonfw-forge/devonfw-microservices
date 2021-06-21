@@ -2,7 +2,7 @@
 # Application image
 image:
   # Docker registry
-  registry: "k3d-registry.localhost:5000"
+  registry: "k3d-registry:5000"
   # Docker repository (application name)
   repository: "demo-quarkus"
   # Docker image tag (application version)
