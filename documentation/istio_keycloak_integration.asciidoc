@@ -1,0 +1,98 @@
+## Setting up the Quarkus reference application with Istio and Keycloak
+
+This is a step-by-step guide to setting up the Quarkus reference application in conjunction with Istio and Keycloak. This setup was tested in a local Kubernetes cluster in a WSL environment. To set up the environment, follow these instructions: https://1000kit.gitlab.io/guides/docs/dev-environment/wsl2-pure/.
+
+### Create the Kubernetes cluster
+To create the cluster, we use k3d. Navigate to the folder with the reference application and run the following command in your WSL environment.
+k3d cluster create -c k8s/cluster-dev.yaml --k3s-server-arg '--no-deploy=traefik'
+
+### Install Istio
+The first step is to install Istio. Navigate in your home directory and execute the following commands.
+```
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.10.0
+export PATH=$PWD/bin:$PATH
+```
+
+For this example we use the `default` configuration profile. This will install the Istio core components. We label the Kubernetes namespace 'default' to instruct Istio to inject the Envoy sidecar proxy.
+```
+istioctl install --set profile=default -y
+kubectl label namespace default istio-injection=enabled
+```
+
+### Build application and Docker image
+Now we need to build the application and the corresponding Docker image. Use Maven to build the application, create a Docker image and push it into your local Docker registry.
+```
+mvn clean package
+docker build -f src/main/docker/Dockerfile.jvm . -t demo-quarkus
+docker tag demo-quarkus k3d-registry.localhost:5000/demo-quarkus
+docker push k3d-registry.localhost:5000/demo-quarkus
+```
+
+### Deploy application
+Apply the following files to your Kubernetes cluster.
+```
+kubectl apply -f k8s/postgres-deployment.yaml
+kubectl apply -f k8s/postgres-service.yaml
+
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
+You now should see a response from the application when using curl to reach the URL http://demo-quarkus.default:8080/animals.
+```
+kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl http://demo-quarkus.default:8080/animals
+Response: {"totalElements":0,"number":0,"size":100,"totalPages":0,"stream":[]}
+```
+
+This will only work from the Kubernetes cluster, because we use the name of the Kubernetes service to reach the service. To explode the application use:
+```
+kubectl apply -f k8s/istio/demo-quarkus-gateway.yaml
+```
+You should now able to open the URL http://demo-quarkus.localhost/animals in your browser.
+
+### Deploy and configure Keycloak
+We use Keycloak for identity management. Apply the following files to your cluster to start Keycloak and explode it via Istio ingress gateway.
+```
+kubectl apply -f k8s/keycloak/keycloak.yaml
+kubectl apply -f k8s/keycloak/keycloak-gateway.yaml
+```
+
+You should be able to open http://keycloak-demo-quarkus.localhost/auth/ in the browser. Open the Keycloak administration console and log in with `admin` as username and password.
+Add a new realm by selecting the realm-export.json file.
+
+Click on `Groups` and create a new group `User`. Then click on `Roles` and create the following roles:
+```
+admin, user, demo-quarkus.FindObject, demo-quarkus.SaveObject, demo-quarkus.DeleteObject
+```
+Now create a new user called `demo` and add it to the group you created.
+Finally, open the client `demo-quarkus-cli`, click on the tab Mapper and add the group mapper to the client. Your Keyloak is now fully configured.
+
+### Test the application
+Now it is time to test the application. Run the following command:
+```
+kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl http://demo-quarkus.default:8080/animals
+```
+You should get a valid response from the application. But there are no animals in our database at the moment. So let's try to create an animal. To do this, run the following command:
+```
+kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl -H "Content-Type: application/json" --request POST --data '{"name": "dog", "basicInfo": "home pet", "numberOfLegs":4}' http://demo-quarkus.default:8080/animals -i
+```
+You will get an error message 401 Unauthorized. This is because this operation is secured with the role `demo-quarkus.SaveObject`. You can only access this operation if you pass a valid JWT token in the request header. So add the role to the user in Keycloak and run the following command to get the token.
+```
+TOKEN=$(curl -d 'client_id=demo-quarkus-cli' -d 'username=demo' -d 'password=demo' -d 'grant_type=password' 'http://keycloak-demo-quarkus.localhost/auth/realms/demo-quarkus/protocol/openid-connect/token' | jq ".access_token" -r)
+```
+Now you can call the operation again and pass the token:
+```
+kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" --request POST --data '{"name": "dog", "basicInfo": "home pet", "numberOfLegs":4}' http://demo-quarkus.default:8080/animals -i
+```
+There is now an animal stored in the database. You can check this by displaying the list of animals again. To use the other methods implemented in the application to find and delete animals, you need to add the roles `demo-quarkus.FindObject` and `demo-quarkus.DeleteObject` to the user and get a new token.
+
+### Authoriation by Istio
+You can also add authorization policies with Istio. Requests are then first validated by the Istio service mesh before being forwarded to the application. Add the authorization policy by applying the file `k8s/istio/authorization-policy.yaml` to your cluster.
+```
+kubectl apply -f k8s/istio/authorization-policy.yaml
+```
+Now try again to get the list of animals. You will get an error message `RBAC: access denied`. This is because the url http://demo-quarkus.default:8080/animals is now also protected by a Istio policy. You need to pass a valid JWT token with the role 'user'. So add the role 'user' to the user in keycloak, get a new token and try again. Now you should get a valid response.
+```
+kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl http://demo-quarkus.default:8080/animals -H "Authorization: Bearer $TOKEN"
+```
