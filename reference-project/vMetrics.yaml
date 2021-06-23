@@ -7,6 +7,3 @@ scrape_configs:
       - targets: ["host.docker.internal:8080"]
       #- targets: ['otel-collector:8889']
       #- targets: ['otel-collector:8888']
-
-#remote_write:
- # - url: http://victoriametrics:8428/api/v1/write
