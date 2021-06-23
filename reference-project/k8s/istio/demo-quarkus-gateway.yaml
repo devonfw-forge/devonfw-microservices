@@ -30,6 +30,8 @@ spec:
             prefix: /animals
         - uri:
             prefix: /q/health
+        - uri:
+            prefix: /secure
       route:
         - destination:
             host: demo-quarkus.default.svc.cluster.local

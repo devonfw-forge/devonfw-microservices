@@ -24,7 +24,7 @@ spec:
       containers:
         - name: demo-quarkus
           # where should the image come from
-          image: 'k3d-registry:5000/demo-quarkus:latest'
+          image: 'k3d-registry.localhost:5000/demo-quarkus:latest'
           # always perform pull when creating pod
           imagePullPolicy: Always
           # env vars so we can connect to DB
@@ -35,6 +35,12 @@ spec:
               value: demo
             - name: QUARKUS_DATASOURCE_PASSWORD
               value: demo
+            - name: MP_JWT_VERIFY_ISSUER
+              value: "http://keycloak-demo-quarkus.localhost/auth/realms/demo-quarkus"  
+            - name: MP_JWT_VERIFY_PUBLICKEY_LOCATION
+              value: "http://keycloak.default:8080/auth/realms/demo-quarkus/protocol/openid-connect/certs"
+            - name: QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION
+              value: drop-and-create
           # live & ready probes, using our healthcheck endpoints
           livenessProbe:
             failureThreshold: 5

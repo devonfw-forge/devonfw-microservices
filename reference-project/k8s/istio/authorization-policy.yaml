@@ -7,6 +7,8 @@ spec:
   jwtRules:
   - issuer: "http://keycloak-demo-quarkus.localhost/auth/realms/demo-quarkus"
     jwksUri: "http://keycloak.default:8080/auth/realms/demo-quarkus/protocol/openid-connect/certs"
+    #forwardOriginalToken must be set if the token is to be passed to the application. Otherwise Istio will remove the token from the header.
+    forwardOriginalToken: true
   selector:
     matchLabels:
       app: demo-quarkus
@@ -21,14 +23,24 @@ spec:
       app: demo-quarkus
   action: ALLOW
   rules:
-  - from:
-    - source:
-        # TODO issuer/sub (sub is userid of user demo)
-        requestPrincipals: ["*"]
-    to:
-      - operation:
-          paths: [ "/animals"]
+  # get request
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: [ "/animals", "/animals/*"]
+    when:
+      - key: request.auth.claims[realm_access][roles]
+        values: [ "user", "admin" ]
+  # post and delete request
+  - to:
+    - operation:
+        methods: [ "POST", "DELETE" ]
+        paths: [ "/animals", "/animals/*" ]
+    when:
+      - key: request.auth.claims[realm_access][roles]
+        values: [ "admin" ]
+  # This rule doesn't have `from` or `when` allowing any access (without JWT)
   - to:
     # The 2nd rule doesn't have `from` allowing any access (without JWT)
     - operation:
-        paths: [ "/q/health/ready"]
+        paths: [ "/q/health/ready", "/q/health/live", "/secure/*"]

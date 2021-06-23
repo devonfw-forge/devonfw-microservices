@@ -5,6 +5,7 @@ import com.devonfw.demoquarkus.domain.model.Animal;
 import com.devonfw.demoquarkus.rest.v1.model.AnimalDTO;
 import com.devonfw.demoquarkus.rest.v1.model.AnimalSearchCriteriaDTO;
 import com.devonfw.demoquarkus.rest.v1.model.NewAnimalDTO;
+import com.devonfw.demoquarkus.ApplicationAccessControlConfig;
 import com.devonfw.demoquarkus.domain.dao.AnimalDAO;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.faulttolerance.Retry;
@@ -17,6 +18,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.tkit.quarkus.jpa.daos.PageResult;
 import org.tkit.quarkus.rs.models.PageResultDTO;
 
+import javax.annotation.security.RolesAllowed;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
@@ -24,6 +27,7 @@ import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Random;
 
+@RequestScoped
 //In Quarkus all JAX-RS resources are treated as CDI beans
 //default is Singleton scope
 @Path("/animals")
@@ -65,6 +69,7 @@ public class AnimalRestController {
             @APIResponse(responseCode = "500")})
     @Operation(operationId = "createNewAnimal", description = "Stores new animal in DB")
     @POST
+    @RolesAllowed(ApplicationAccessControlConfig.PERMISSION_SAVE_OBJECT)
     // We did not define custom @Path - so it will use class level path.
     // Although we now have 2 methods with same path, it is ok, because it is a different method (get vs post)
     public Response createNewAnimal(NewAnimalDTO dto) {
@@ -84,6 +89,7 @@ public class AnimalRestController {
             @APIResponse(responseCode = "500")})
     @Operation(operationId = "getAnimalById", description = "Returns animal with given id")
     @GET
+    @RolesAllowed(ApplicationAccessControlConfig.PERMISSION_FIND_OBJECT)
     @Path("{id}")
     public Response getAnimalById(@Parameter(description = "Animal unique id") @PathParam("id") String id) {
 
@@ -100,6 +106,7 @@ public class AnimalRestController {
             @APIResponse(responseCode = "404", description = "Animal not found"), @APIResponse(responseCode = "500")})
     @Operation(operationId = "deleteAnimalById", description = "Deletes the animal with given id")
     @DELETE
+    @RolesAllowed(ApplicationAccessControlConfig.PERMISSION_DELETE_OBJECT)
     @Path("{id}")
     // we add transaction here, cause we do select and then pass the detached entity to DAO for deletion
     @Transactional
@@ -137,7 +144,7 @@ public class AnimalRestController {
             return List.of("imagine real data here", "and also this shocking fact");
         }
     }
-
-  private static class PagedAnimalResponse extends PageResultDTO<AnimalDTO> {}
+    
+    private static class PagedAnimalResponse extends PageResultDTO<AnimalDTO> {}
 
 }

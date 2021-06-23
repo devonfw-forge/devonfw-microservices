@@ -78,6 +78,14 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-jwt</artifactId>
+	  </dependency>
+	  <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-jwt-build</artifactId>
+	  </dependency>
     <!-- Json logging / Enable this if you do not use tkit-json-log -->
 <!--    <dependency>-->
 <!--      <groupId>io.quarkus</groupId>-->
