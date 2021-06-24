@@ -8,4 +8,4 @@ ports:
     nodeFilters:
       - loadbalancer
 registries:
-  use: k3d-registry.localhost:5000
+  use: k3d-registry:5000

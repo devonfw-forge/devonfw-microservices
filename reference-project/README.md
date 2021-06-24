@@ -89,7 +89,7 @@ It is recommended to use vanilla maven settings(no custom mirror, proxy) for bet
 Create your k3d cluster and registry
 ```shell
 k3d registry create registry --port 5000
-k3d cluster create -c k8s/dev.yaml
+k3d cluster create -c k8s/cluster-setup.yaml
 ```
 
 Package your app as docker container and push to local k3d registry:

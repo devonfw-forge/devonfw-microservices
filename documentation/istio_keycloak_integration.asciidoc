@@ -4,7 +4,7 @@ This is a step-by-step guide to setting up the Quarkus reference application in 
 
 ### Create the Kubernetes cluster
 To create the cluster, we use k3d. Navigate to the folder with the reference application and run the following command in your WSL environment.
-k3d cluster create -c k8s/cluster-dev.yaml --k3s-server-arg '--no-deploy=traefik'
+k3d cluster create -c k8s/cluster-setup.yaml --k3s-server-arg '--no-deploy=traefik'
 
 ### Install Istio
 The first step is to install Istio. Navigate in your home directory and execute the following commands.
@@ -25,9 +25,14 @@ Now we need to build the application and the corresponding Docker image. Use Mav
 ```
 mvn clean package
 docker build -f src/main/docker/Dockerfile.jvm . -t demo-quarkus
-docker tag demo-quarkus k3d-registry.localhost:5000/demo-quarkus
-docker push k3d-registry.localhost:5000/demo-quarkus
+docker tag demo-quarkus k3d-registry:5000/demo-quarkus
+docker push k3d-registry:5000/demo-quarkus
 ```
+If you want to create a native executable use:
+```
+mvn clean package -Pnative
+```
+If tests fail because of authorization configurations you can add `-Dmaven.test.skip=true` option to skip the tests.
 
 ### Deploy application
 Apply the following files to your Kubernetes cluster.
