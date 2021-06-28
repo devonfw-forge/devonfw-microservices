@@ -119,12 +119,18 @@ kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata
 There is now an animal stored in the database. You can check this by displaying the list of animals again. +
 To use the other methods implemented in the application to find and delete animals, you need to add the roles `demo-quarkus.FindObject` and `demo-quarkus.DeleteObject` to the user and get a new token.
 
-=== Authorization through Istio
-You can also add authorization policies with Istio. Requests are then first validated by the Istio service mesh before being forwarded to the application. Add the authorization policy by applying the file `k8s/istio/authorization-policy.yaml` to your cluster.
+=== Authorization by Istio
+You can also add authorization policies with Istio. Requests are then first validated by the Istio service mesh before being forwarded to the application. +
+Add the authorization policy by applying the file `k8s/istio/authorization-policy.yaml` to your cluster.
 ```
 kubectl apply -f k8s/istio/authorization-policy.yaml
 ```
-Now try again to get the list of animals. You will get an error message `RBAC: access denied`. This is because the url http://demo-quarkus.default:8080/animals is now also protected by a Istio policy. You need to pass a valid JWT token with the role 'user'. So add the role 'user' to the user in keycloak, get a new token and try again. Now you should get a valid response.
+Now try again to get the list of animals. You will get an `RBAC: access denied` error message. This is because the url http://demo-quarkus.default:8080/animals is now also protected by a Istio policy. You need to pass a valid JWT token with the role 'user'. So add the role 'user' to the user in keycloak, get a new token and try again. +
+Now you should get a valid response.
 ```
 kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl http://demo-quarkus.default:8080/animals -H "Authorization: Bearer $TOKEN"
 ```
+
+=== When to use which authorization?
+Normally, the Istio authorisation policies are sufficient to provide standard role bases permissions. In this case, you do not need to validate the token again in the application. +
+If you want to add further validation, such as checking the claims of the JWT token or dynamically adding permissions based on database entries, then it is better to add further authorization logic in the code of the application.
