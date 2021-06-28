@@ -1,13 +1,34 @@
-## Setting up the Quarkus reference application with Istio and Keycloak
+:toc: macro
+toc::[]
+:idprefix:
+:idseparator: -
+== Authentication with Keycloak and Istio
+
+=== Introducing _https://www.keycloak.org/[Keycloak]_
+Keycloak is an opensource IAM (Identity and Access Management) solution with a broad set of features like SSO, authentication and authorization, social login, multifactor authentication etc.
+
+=== Introducing _https://istio.io/latest/docs/concepts/[Istio]_
+Istio is an opensource _https://istio.io/latest/about/service-mesh/[Service Mesh]_ that helps organizations run distributed MS-based apps anywhere.
+It contains both a control plane and a data plane (Envoy Sidecar). The control plane takes the desired configuration, and its view of the services, and dynamically programs the proxy servers, updating them as the rules or the environment changes. Its powerful features provide a uniform and more efficient way to secure, connect, and monitor services.
+
+* *Traffic management*: managing flow of traffic among services, from external and simplifying configuration of service-level properties like circuit breakers, timeouts etc.
+* *Observability*: generating detailed telemetry includes detailed metrics, distributed traces, and full access logs
+* *Security*: providing strong identity, powerful policy, transparent TLS encryption, and among-services/external/RBAC authentication, authorization and audit (AAA) tools
+
+== Setting up the Quarkus reference application with Istio and Keycloak
 
 This is a step-by-step guide to setting up the Quarkus reference application in conjunction with Istio and Keycloak. This setup was tested in a local Kubernetes cluster in a WSL environment. To set up the environment, follow these instructions: https://1000kit.gitlab.io/guides/docs/dev-environment/wsl2-pure/.
 
-### Create the Kubernetes cluster
+=== Create the Kubernetes cluster
 To create the cluster, we use k3d. Navigate to the folder with the reference application and run the following command in your WSL environment.
+```
 k3d cluster create -c k8s/cluster-setup.yaml --k3s-server-arg '--no-deploy=traefik'
+```
+This will create a local Kubernetes cluster with one master and two worker nodes within your WSL environment. It also starts a local Docker registry running on port 5000. By default, k3d creates a Traefik proxy as an ingress controller. Since we will use the Istio Ingress Gateway later, we do not need it here.
 
-### Install Istio
-The first step is to install Istio. Navigate in your home directory and execute the following commands.
+=== Install Istio
+The first step is to install Istio. You can find a https://istio.io/latest/docs/setup/getting-started/[Getting Started] guide and some sample applications on the Istio homepage. +
+Navigate in your home directory and execute the following commands:
 ```
 curl -L https://istio.io/downloadIstio | sh -
 cd istio-1.10.0
@@ -20,13 +41,10 @@ istioctl install --set profile=default -y
 kubectl label namespace default istio-injection=enabled
 ```
 
-### Build application and Docker image
-Now we need to build the application and the corresponding Docker image. Use Maven to build the application, create a Docker image and push it into your local Docker registry.
+=== Build the application and create a Docker image
+Now we need to build the application and the corresponding Docker image. Use Maven to build the application.
 ```
 mvn clean package
-docker build -f src/main/docker/Dockerfile.jvm . -t demo-quarkus
-docker tag demo-quarkus k3d-registry:5000/demo-quarkus
-docker push k3d-registry:5000/demo-quarkus
 ```
 If you want to create a native executable use:
 ```
@@ -34,8 +52,16 @@ mvn clean package -Pnative
 ```
 If tests fail because of authorization configurations you can add `-Dmaven.test.skip=true` option to skip the tests.
 
-### Deploy application
-Apply the following files to your Kubernetes cluster.
+Then we create a Docker image and push it into your local Docker registry, which was started by k3d.
+
+```
+docker build -f src/main/docker/Dockerfile.jvm . -t demo-quarkus
+docker tag demo-quarkus k3d-registry:5000/demo-quarkus
+docker push k3d-registry:5000/demo-quarkus
+```
+
+=== Deploy the application in Kubernetes
+To deploy the application, apply the following files to your Kubernetes cluster.
 ```
 kubectl apply -f k8s/postgres-deployment.yaml
 kubectl apply -f k8s/postgres-service.yaml
@@ -50,20 +76,20 @@ kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata
 Response: {"totalElements":0,"number":0,"size":100,"totalPages":0,"stream":[]}
 ```
 
-This will only work from the Kubernetes cluster, because we use the name of the Kubernetes service to reach the service. To explode the application use:
+This only works within the Kubernetes cluster, as we use the Kubernetes service name to reach the application. To expose the application for access from outside we can use Istio Gateways:
 ```
 kubectl apply -f k8s/istio/demo-quarkus-gateway.yaml
 ```
 You should now able to open the URL http://demo-quarkus.localhost/animals in your browser.
 
-### Deploy and configure Keycloak
-We use Keycloak for identity management. Apply the following files to your cluster to start Keycloak and explode it via Istio ingress gateway.
+=== Deploy and configure Keycloak
+We use Keycloak for identity management. Apply the following files to your cluster to start a Keycloak instance and expose it via Istio Ingress Gateway for access from outside.
 ```
 kubectl apply -f k8s/keycloak/keycloak.yaml
 kubectl apply -f k8s/keycloak/keycloak-gateway.yaml
 ```
 
-You should be able to open http://keycloak-demo-quarkus.localhost/auth/ in the browser. Open the Keycloak administration console and log in with `admin` as username and password.
+You should be able to open http://keycloak-demo-quarkus.localhost/auth/ in the browser. Open the Keycloak administration console and log in with `admin` as username and password. +
 Add a new realm by selecting the realm-export.json file.
 
 Click on `Groups` and create a new group `User`. Then click on `Roles` and create the following roles:
@@ -73,7 +99,7 @@ admin, user, demo-quarkus.FindObject, demo-quarkus.SaveObject, demo-quarkus.Dele
 Now create a new user called `demo` and add it to the group you created.
 Finally, open the client `demo-quarkus-cli`, click on the tab Mapper and add the group mapper to the client. Your Keyloak is now fully configured.
 
-### Test the application
+=== Test the application
 Now it is time to test the application. Run the following command:
 ```
 kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl http://demo-quarkus.default:8080/animals
@@ -82,17 +108,18 @@ You should get a valid response from the application. But there are no animals i
 ```
 kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl -H "Content-Type: application/json" --request POST --data '{"name": "dog", "basicInfo": "home pet", "numberOfLegs":4}' http://demo-quarkus.default:8080/animals -i
 ```
-You will get an error message 401 Unauthorized. This is because this operation is secured with the role `demo-quarkus.SaveObject`. You can only access this operation if you pass a valid JWT token in the request header. So add the role to the user in Keycloak and run the following command to get the token.
+You will get an `401 Unauthorized` error message. This is because this operation is secured with the role `demo-quarkus.SaveObject`. You can only access this operation if you pass a valid JWT token in the request header. So add the role to the user in Keycloak and run the following command to get the token.
 ```
 TOKEN=$(curl -d 'client_id=demo-quarkus-cli' -d 'username=demo' -d 'password=demo' -d 'grant_type=password' 'http://keycloak-demo-quarkus.localhost/auth/realms/demo-quarkus/protocol/openid-connect/token' | jq ".access_token" -r)
 ```
-Now you can call the operation again and pass the token:
+Now you can call the operation again and this time pass the token:
 ```
 kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata.name}) -c demo-quarkus -- curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" --request POST --data '{"name": "dog", "basicInfo": "home pet", "numberOfLegs":4}' http://demo-quarkus.default:8080/animals -i
 ```
-There is now an animal stored in the database. You can check this by displaying the list of animals again. To use the other methods implemented in the application to find and delete animals, you need to add the roles `demo-quarkus.FindObject` and `demo-quarkus.DeleteObject` to the user and get a new token.
+There is now an animal stored in the database. You can check this by displaying the list of animals again. +
+To use the other methods implemented in the application to find and delete animals, you need to add the roles `demo-quarkus.FindObject` and `demo-quarkus.DeleteObject` to the user and get a new token.
 
-### Authoriation by Istio
+=== Authorization through Istio
 You can also add authorization policies with Istio. Requests are then first validated by the Istio service mesh before being forwarded to the application. Add the authorization policy by applying the file `k8s/istio/authorization-policy.yaml` to your cluster.
 ```
 kubectl apply -f k8s/istio/authorization-policy.yaml
