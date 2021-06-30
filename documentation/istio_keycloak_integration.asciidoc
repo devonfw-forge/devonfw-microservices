@@ -20,11 +20,15 @@ It contains both a control plane and a data plane (Envoy Sidecar). The control p
 This is a step-by-step guide to setting up the Quarkus reference application in conjunction with Istio and Keycloak. This setup was tested in a local Kubernetes cluster in a WSL environment. To set up the environment, follow these instructions: https://1000kit.gitlab.io/guides/docs/dev-environment/wsl2-pure/.
 
 === Create the Kubernetes cluster
-To create the cluster, we use k3d. Navigate to the folder with the reference application and run the following command in your WSL environment.
+To create the cluster, we use k3d. First create a local Docker registry.
+```
+k3d registry create registry --port 5000
+```
+The next step is to create the cluster. Navigate to the folder with the reference application and run the following command in your WSL environment.
 ```
 k3d cluster create -c k8s/cluster-setup.yaml --k3s-server-arg '--no-deploy=traefik'
 ```
-This will create a local Kubernetes cluster with one master and two worker nodes within your WSL environment. It also starts a local Docker registry running on port 5000. By default, k3d creates a Traefik proxy as an ingress controller. Since we will use the Istio Ingress Gateway later, we do not need it here.
+This will create a local Kubernetes cluster with one master and two worker nodes within your WSL environment. By default, k3d creates a Traefik proxy as an ingress controller. Since we will use the Istio Ingress Gateway later, we do not need it here.
 
 === Install Istio
 The first step is to install Istio. You can find a https://istio.io/latest/docs/setup/getting-started/[Getting Started] guide and some sample applications on the Istio homepage. +
@@ -134,3 +138,51 @@ kubectl exec $(kubectl get pod -l app=demo-quarkus -o jsonpath={.items..metadata
 === When to use which authorization?
 Normally, the Istio authorisation policies are sufficient to provide standard role bases permissions. In this case, you do not need to validate the token again in the application. +
 If you want to add further validation, such as checking the claims of the JWT token or dynamically adding permissions based on database entries, then it is better to add further authorization logic in the code of the application.
+
+=== Securing the gateways with HTTPS
+At the moment, external traffic from the client to the service is not secured. Istio provides secure gateways to host the services on HTTPS using simple or mutual TLS.
+
+First we generate  a self-signed root certificate for the services.
+```
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=Demo Inc./CN=demo.com' -keyout root-cert.key -out root-cert.crt
+```
+In the next step we create a certificate and a private key for `demo-quarkus.localhost`. We first generate a private key and a CSR (Certificate Signing Request) and then use the root certificate to sign the CSR and create the certificate.
+```
+openssl req -out demo-quarkus.csr -newkey rsa:2048 -nodes -keyout demo-quarkus.key -subj "/CN=demo-quarkus.localhost/O=demo organization"
+openssl x509 -req -days 365 -CA root-cert.crt -CAkey root-cert.key -set_serial 0 -in demo-quarkus.csr -out demo-quarkus.crt
+```
+Now we need to create a TLS secret with the generated key and certificate.
+```
+kubectl create -n istio-system secret tls demo-quarkus-credential --key=demo-quarkus.key --cert=demo-quarkus.crt
+```
+Apply the file `demo-quarkus-gateway-secure.yaml` to your cluster. The file defines a gateway listening on port 443 with a simple TLS protocol. The name of the credential in the yaml file must match the name of the secret you created earlier.
+Now you should be able to reach the service and get the correct response by passing the root certificate in the curl command.
+```
+export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+curl --resolve "demo-quarkus.localhost:443:$INGRESS_HOST" --cacert root-cert.crt "https://demo-quarkus.localhost:443/animals"
+```
+If you execute the command without the `--cacert` option, the command will fail because a secure connection cannot be established. You can use the `-v`(verbose) option of the curl command to get detailed information.
+{empty} +
+{empty} +
+
+==== Mututal TLS
+In the next step, we extend our gateway to support https://en.wikipedia.org/wiki/Mutual_authentication[mutual TLS]. This may be necessary if you need to establish trust between the client and the server and vice versa.
+To do this, change the TLS mode in the gateway file from `SIMPLE` to `MUTUAL` and apply it again to the Kubernetes cluster. Try the curl command from the previous step again. It will not work because the server now also expects a certificate from the client.
+
+First delete the old tls secret.
+```
+kubectl -n istio-system delete secret demo-quarkus-credential
+```
+Now create a new secret. You must set the properties `tls.key` and `tls.crt`, and `ca.crt` to include the CA certificate (root certificate).
+```
+kubectl create -n istio-system secret generic demo-quarkus-credential --from-file=tls.key=demo-quarkus.key --from-file=tls.crt=demo-quarkus.crt --from-file=ca.crt=root-cert.crt
+```
+Create the client certificate and sign it with the root certificate.
+```
+openssl req -out client.csr -newkey rsa:2048 -nodes -keyout client.key -subj "/CN=client.com/O=client organization"
+openssl x509 -req -days 365 -CA root-cert.crt -CAkey root-cert.key -set_serial 1 -in client.csr -out client.crt
+```
+When passing the client certificate and private key to the curl command, you should be able to see a valid response.
+```
+curl --resolve "demo-quarkus.localhost:443:$INGRESS_HOST" --cacert root-cert.crt --cert client.crt --key client.key "https://demo-quarkus.localhost:443/animals" 
+```
