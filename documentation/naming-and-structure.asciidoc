@@ -12,18 +12,26 @@ Scope: Backend microservices providing HTTP/RESTful API.
 * introduce complexity progresively, if required
 * pragmatic and productive, recommendations not rules
 
+=== Packaging
 
-`«group».«artifact»[.«component»].«layer»[.«type»]*`
+The new packaging schema is suggested as:
+```
+«root».«component».«layer»[.«detail»]*
+```
+
+See also existing https://github.com/devonfw/devon4j/blob/master/documentation/coding-conventions.asciidoc#packages[devon4j packaging] that we want to simplify and modernize here.
 
 .Segments of package schema
 [options="header"]
 |=============================================
 | *Segment*      | *Description* | *Example*
-| «group» | Matches your maven `groupId` coordinate, basic name-space of the organization or IT project owning the code. Corresponds to domain name reversed. |`com.devonfw`
-| «artifact» | Matches your maven `artifact` coordinate, converted to java package conventions(e.g. `-` omitted). Can be further simplified if it does not cause disambiguity(e.g. `presales-order-bff`-> `pobff`) | `orderservice`, `usermgmt`..
-| «component» | Only used if the service serves multiple business components. Most microservices usually address a single business component/domain. In this case it is ommited(its already implied by the artifactid)| `users`, `order`
-| «layer» | The name of the technical layer (See link:architecture.asciidoc[technical architecture]) which is one of the predefined layers (`domain`, `rest`, `logic`) or `common` for code not assigned to a technical layer (datatypes, cross-cutting concerns). Additional layers can be introduced if they have clear scope e.g. `batch`, `process`.. | `rest`
-| «type» | Further division based on common stereotypes based on type of component. Suggested stereotypes for `rest` layer are [`controller`, `model`, `mapper`, `filter`..] for `domain` layer: [`model`, `dao`]  | `dao`
+| `«root»` | The root package. Typically we suggest to use `«group».«artifact»` for `«root»`. However, we will not enforce anything and let you the freedom of choice if the recommendation does not fit for you.|`com.devonfw`
+| `«group»` | Matches your maven `groupId` coordinate, basic name-space of the organization or IT project owning the code. Corresponds to domain name reversed. |`com.devonfw`
+| `«artifact»` | Matches your maven `artifact` coordinate, converted to java package conventions(e.g. `-` omitted). Can be further simplified if it does not cause disambiguity(e.g. `presales-order-bff`-> `pobff`) | `orderservice`, `usermgmt`..
+| `«component»` | Only used if the service serves multiple business components. Most microservices usually address a single business component/domain. In this case it is ommited(its already implied by the artifactid)| `users`, `order`
+| `«layer»` | The name of the technical layer (See link:architecture.asciidoc[technical architecture]) which is one of the predefined layers (`domain`, `rest`, `logic`) or `common` for code not assigned to a technical layer (datatypes, cross-cutting concerns). Additional layers can be introduced if they have clear scope e.g. `batch`, `process`.. | `rest`
+| `«detail»` | You will technically have the freedom of choice to define your sub-packages. Compared to `devon4j` we neither enforce nor recommend anymore to use the `«scope»` segment in your packaging. You are still free to do so if you like it. However, we now suggest the `«type»` segment for furhter classification within `«detail»`.|`dao`
+| `«type»` | Further division based on common stereotypes based on type of component. Suggested stereotypes for `rest` layer are [`controller`, `model`, `mapper`, `filter`..] for `domain` layer: [`model`, `dao`]  | `dao`
 |=============================================
 
 For a typical backend MS that provides HTTP API and data persistence via JPA in the business domain `serviceorder` the structure would be something like this: 
@@ -53,6 +61,23 @@ For a typical backend MS that provides HTTP API and data persistence via JPA in 
 ----
 
 You add layes as required(a typical CRUD style microservice does not need logic layer 90% of the time) based on business needs(if your service integrations with BPM engine, add `process` layer, if you run batch jobs, add `batch` layer...)
+
+==== Comparison with classic devon4j packaging
+
+* `service.[api|impl].[rest|ws]` simply becomes `rest`, `ws` (in case someone should still do legacy SOAP nonsense), `grpc`, etc. Technically we can still derive that this all implies the `service` layer.
+* `dataaccess` becomes `domain`. You are not forced to follow this and architcture validation such as our `sonar-devon4j-plugin` will in the future support both. However, new CobiGen templates for quarkus/cloud-native will use this new default and would need to adopt them if you want to change. We also suggest to put entities in the `model` sub-package (see `«type»`).
+* `logic` remains `logic`
+
+Things to be discussed and aligned:
+
+* https://github.com/devonfw/devon4j/blob/master/documentation/coding-conventions.asciidoc#naming[devon4j naming conventions] clearly discourage to use CAPITALCASE for abbreviations and we did convince all our people for this. I do not see why we should now go back and use `DTO` or `DAO` suffixes instead of `Dto` or `Dao`.
+* `Eto` vs. `Dto` and dropping the `Eto` and `Cto` concept. I am open for this discussion but want to also get your feedback on this. Are there concerns and experiences from existing devon4j projects in this regard? Did you like the devon4j approach? Did you dislike it and welcome the `Dto` approach? We love to hear your feedback.
+* `*RestService` vs. `*RestController`. According to devon4j we should use `*RestService` that has already been established. Any concerns?
+* If we have `Dto`s on service layer, will we expose JPA entities from logic layer API giving up data sovereignty (see https://github.com/devonfw/devon4j/blob/master/documentation/architecture.asciidoc#architecture-principles[])? Feedback from projects is also most welcome.
+* Spring-data vs. `Dao`s. In devon4j we started with `Dao`s and later introduced spring-data because many developers wanted to have this as an improvement and convinced to make it the new first-class citizen and keeping `Dao`s only as legacy support (https://github.com/devonfw/devon4j/blob/master/documentation/guide-jpa.asciidoc#repositories-and-daos[]).
+* Structure of `logic` layer? I am more than happy to drop the ugly https://github.com/devonfw/devon4j/blob/master/documentation/guide-component-facade.asciidoc[component facades] from devon4j and never liked them for their cyclic dependencies. However, what is with our "use-cases" and how is the new structure? This is still a little unclear to me...
+* Bean-Mapping - see https://github.com/devonfw-forge/devonfw-microservices/issues/8
+* Lombok usage - see https://github.com/devonfw-forge/devonfw-microservices/issues/29
 
 == Class naming recommendations
 
