@@ -186,3 +186,28 @@ When passing the client certificate and private key to the curl command, you sho
 ```
 curl --resolve "demo-quarkus.localhost:443:$INGRESS_HOST" --cacert root-cert.crt --cert client.crt --key client.key "https://demo-quarkus.localhost:443/animals" 
 ```
+
+==== Internal traffic
+By default, a service's sidecar proxy is configured to accept both mTLS and non-mTLS traffic (`PERMISSIVE` mode). This can be changed by using a `PeerAuthentication` resource. Use `STRICT` mode to force traffic to use mTLS, or `DISABLE` mode where traffic must be in plain text.
+```
+kubectl apply -n foo -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+spec:
+  mtls:
+    mode: DISABLE
+EOF
+```
+You can use the Grafana dashboard to check whether plain text is sent or not.
+
+== Istio dashboards
+Istio provides various dashboards for monitoring and visualising different aspects of your Istio network. Create the monitor applications by applying the `addons` folder to your Kubernetes cluster.
+```
+kubectl apply -f k8s/istio/addons/
+```
+Once the pods have been created, you can launch the dashboard application by running:
+```
+istioctl dashboard dashboardName
+```
