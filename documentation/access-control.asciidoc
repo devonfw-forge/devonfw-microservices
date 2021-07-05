@@ -23,7 +23,7 @@ Instead we suggest to follow these best practices:
 * Then the original incoming request is forwarded to the actual service and the JWT is added as https://tools.ietf.org/html/rfc6750[Bearer Token via HTTP header according to OAuth standard].
 * Services are implemented stateless and only accept requests with valid JWT from gateway. Therefore they validate signature using the gateways public key and check validity (`nbf`, `ext`, `iat`).
 * When one of your services invokes another service it simply passes on the JWT via HTTP header. This way all sub-sequent invocations happen within the context and with the permissions of the initial user.
-* Your gateway should also act as portal integrating the UIs of your microservices so the end-users will not notice which UI comes from which service but has the user experience (UX) of a single monolithic UI.
+* Your gateway should also act as portal (see micro-frontends) integrating the UIs of your microservices so the end-users will not notice which UI comes from which service but has the user experience (UX) of a single monolithic UI.
 
 Benefits of this approach:
 
