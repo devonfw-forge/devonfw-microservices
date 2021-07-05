@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: keycloak-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        #- "*"
+        - keycloak-demo-quarkus.localhost
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: keycloak-virtualservice
+spec:
+  hosts:
+    #- "*"
+    - keycloak-demo-quarkus.localhost
+  gateways:
+    - keycloak-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /auth
+      route:
+        - destination:
+            host: keycloak.default.svc.cluster.local
+            port:
+              number: 8080
