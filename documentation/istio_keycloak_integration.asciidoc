@@ -4,11 +4,11 @@ toc::[]
 :idseparator: -
 == Authentication with Keycloak and Istio
 
-=== Introducing _https://www.keycloak.org/[Keycloak]_
-Keycloak is an opensource IAM (Identity and Access Management) solution with a broad set of features like SSO, authentication and authorization, social login, multifactor authentication etc.
+=== Introducing Keycloak
+https://www.keycloak.org/[Keycloak] is an opensource IAM (Identity and Access Management) solution with a broad set of features like SSO, authentication and authorization, social login, multifactor authentication etc.
 
-=== Introducing _https://istio.io/latest/docs/concepts/[Istio]_
-Istio is an opensource _https://istio.io/latest/about/service-mesh/[Service Mesh]_ that helps organizations run distributed MS-based apps anywhere.
+=== Introducing Istio
+https://istio.io/latest/docs/concepts/[Istio] is an opensource _https://istio.io/latest/about/service-mesh/[Service Mesh]_ that helps organizations run distributed MS-based apps anywhere.
 It contains both a control plane and a data plane (Envoy Sidecar). The control plane takes the desired configuration, and its view of the services, and dynamically programs the proxy servers, updating them as the rules or the environment changes. Its powerful features provide a uniform and more efficient way to secure, connect, and monitor services.
 
 * *Traffic management*: managing flow of traffic among services, from external and simplifying configuration of service-level properties like circuit breakers, timeouts etc.
