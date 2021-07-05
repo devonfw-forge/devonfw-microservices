@@ -16,7 +16,7 @@ Implemeting the actual authentication into every application or service is there
 Instead we suggest to follow these best practices:
 
 * Use a central _identity and access management_ (IAM) based on an established product (e.g. https://www.keycloak.org/[keycloak]).
-* All incoming traffic of users goes via a gateway that acts as a reverse proxy to your actual services.
+* All incoming traffic of users goes via a _gateway_ (no matter if you call it API-gateway, Backend-for-Frontend, or whatever) that acts as a reverse proxy to your actual services.
 * That gateway is responsible for authentication by integrating with your IAM (e.g. using https://webauthn.io/[WebAuthn], https://openid.net/connect/[OpenId Connect] or https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html[SAMLv2]).
 * After successful authentication the gatway retrieves the roles/groups of the user and creates a https://jwt.io/[JOSN Web Token] (JWT) that is signed with a strong asymmetric security algorithm.
 * The private key is only available on the gateway(s) and key-pairs are unique per environment (DTAP).
