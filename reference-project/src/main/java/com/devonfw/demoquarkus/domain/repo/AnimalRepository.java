@@ -9,7 +9,7 @@ import com.devonfw.demoquarkus.domain.model.Animal;
 public interface AnimalRepository extends CrudRepository<Animal, Long>, AnimalFragment {
 	
 	@Query("select a from Animal a where name = ?1")
-    Animal findByName(String name);
+	Animal findByName(String name);
 	
 	Page<Animal> findAllByOrderByName();
 }
