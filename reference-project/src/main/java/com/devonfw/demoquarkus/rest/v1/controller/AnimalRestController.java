@@ -2,10 +2,10 @@ package com.devonfw.demoquarkus.rest.v1.controller;
 
 import com.devonfw.demoquarkus.rest.v1.mapper.AnimalMapper;
 import com.devonfw.demoquarkus.domain.model.Animal;
+import com.devonfw.demoquarkus.domain.repo.AnimalRepository;
 import com.devonfw.demoquarkus.rest.v1.model.AnimalDTO;
 import com.devonfw.demoquarkus.rest.v1.model.AnimalSearchCriteriaDTO;
 import com.devonfw.demoquarkus.rest.v1.model.NewAnimalDTO;
-import com.devonfw.demoquarkus.domain.dao.AnimalDAO;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -14,13 +14,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-import org.tkit.quarkus.jpa.daos.PageResult;
+import org.springframework.data.domain.Page;
 import org.tkit.quarkus.rs.models.PageResultDTO;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+
 import java.util.List;
 import java.util.Random;
 
@@ -36,7 +37,7 @@ public class AnimalRestController {
 
     // our class is Bean(implicit Appscope), so we can inject any CDI bean into it
     @Inject
-    AnimalDAO animalDAO;
+    AnimalRepository animalRepository;
 
     // mapstruct-generated mappers are CDI beans, we can inject them, see pom.xml#161
     @Inject
@@ -55,8 +56,43 @@ public class AnimalRestController {
     // REST service methods should not declare exceptions, any thrown error will be transformed by exceptionMapper in tkit-rest
     // We did not define custom @Path - so it will use class level path
     public Response getAll(@BeanParam AnimalSearchCriteriaDTO dto) {
-        PageResult<Animal> animals = this.animalDAO.searchByCriteria(this.mapper.map(dto));
-        return Response.ok(this.mapper.map(animals)).build();
+    	Iterable<Animal> animals = this.animalRepository.findAll();
+     	return Response.ok(animals).build();
+    }
+    
+    @GET
+    @Path("criteriaApi")
+    public Response getAllCriteriaApi(@BeanParam AnimalSearchCriteriaDTO dto) {
+    	Page<Animal> page = this.animalRepository.findAllCriteriaApi(dto);
+     	return Response.ok(page).build();
+    }
+    
+    @GET
+    @Path("queryDsl")
+    public Response getAllQueryDsl(@BeanParam AnimalSearchCriteriaDTO dto) {
+    	Page<Animal> page = this.animalRepository.findAllQueryDsl(dto);
+     	return Response.ok(page).build();
+    }
+    
+    @GET
+    @Path("query")
+    public Response getAllQuery(@BeanParam AnimalSearchCriteriaDTO dto) {
+    	List<Animal> animals = this.animalRepository.findByNameQuery(dto);
+     	return Response.ok(animals).build();
+    }
+    
+    @GET
+    @Path("nativeQuery")
+    public Response getAllNativeQuery(@BeanParam AnimalSearchCriteriaDTO dto) {
+    	List<Animal> animals = this.animalRepository.findByNameNativeQuery(dto);
+     	return Response.ok(animals).build();
+    }
+    
+    @GET
+    @Path("ordered")
+    public Response getAllOrderedByName() {
+    	Page<Animal> page = this.animalRepository.findAllByOrderByName();
+     	return Response.ok(page).build();
     }
 
     @APIResponses({
@@ -69,12 +105,12 @@ public class AnimalRestController {
     // Although we now have 2 methods with same path, it is ok, because it is a different method (get vs post)
     public Response createNewAnimal(NewAnimalDTO dto) {
 
-        Animal created = this.animalDAO.create(this.mapper.create(dto));
+    	Animal created = this.animalRepository.save(this.mapper.create(dto));
         // we want to construct a link to our newly created animal
         // we take the current URI = /animals
         UriBuilder uriBuilder = this.uriInfo.getAbsolutePathBuilder();
         // and add a path element corresponding to our id/name
-        uriBuilder.path(created.getId());
+        uriBuilder.path(String.valueOf(created.getId()));
         return Response.created(uriBuilder.build()).build();
     }
 
@@ -87,11 +123,23 @@ public class AnimalRestController {
     @Path("{id}")
     public Response getAnimalById(@Parameter(description = "Animal unique id") @PathParam("id") String id) {
 
-        Animal animal = this.animalDAO.findById(id);
+    	Animal animal = this.animalRepository.findById(Long.valueOf(id)).get();
         if (animal != null) {
             return Response.ok(animal).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).build();
+        }
+    }
+    
+    @GET
+    @Path("name/{name}")
+    public Response getAnimalByName(@PathParam("name") String name) {
+
+    	Animal animal = this.animalRepository.findByName(name);
+        if (animal != null) {
+            return Response.ok(animal).build();
+        } else {
+            return Response.noContent().build();
         }
     }
 
@@ -105,9 +153,9 @@ public class AnimalRestController {
     @Transactional
     public Response deleteAnimalByName(@Parameter(description = "Animal unique id") @PathParam("id") String id) {
 
-        Animal animal = this.animalDAO.findById(id);
+    	Animal animal = this.animalRepository.findById(Long.valueOf(id)).get();
         if (animal != null) {
-            this.animalDAO.delete(animal);
+            this.animalRepository.delete(animal);
             return Response.ok(mapper.map(animal)).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).build();

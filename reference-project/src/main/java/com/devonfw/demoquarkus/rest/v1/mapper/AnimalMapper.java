@@ -6,9 +6,7 @@ import com.devonfw.demoquarkus.domain.model.AnimalSearchCriteria;
 import com.devonfw.demoquarkus.domain.model.Animal;
 import com.devonfw.demoquarkus.rest.v1.model.AnimalSearchCriteriaDTO;
 import org.mapstruct.Mapper;
-import org.tkit.quarkus.jpa.daos.PageResult;
 import org.tkit.quarkus.rs.mappers.OffsetDateTimeMapper;
-import org.tkit.quarkus.rs.models.PageResultDTO;
 
 import com.devonfw.demoquarkus.rest.v1.model.AnimalDTO;
 import com.devonfw.demoquarkus.rest.v1.model.NewAnimalDTO;
@@ -24,6 +22,4 @@ public interface AnimalMapper {
   Animal create(NewAnimalDTO dto);
 
   AnimalSearchCriteria map(AnimalSearchCriteriaDTO dto);
-
-  PageResultDTO<AnimalDTO> map(PageResult<Animal> page);
 }
