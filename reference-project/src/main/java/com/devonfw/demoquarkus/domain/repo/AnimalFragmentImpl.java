@@ -1,7 +1,6 @@
 package com.devonfw.demoquarkus.domain.repo;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -10,15 +9,12 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import com.devonfw.demoquarkus.domain.model.Animal;
 import com.devonfw.demoquarkus.domain.model.Animal_;
 import com.devonfw.demoquarkus.domain.model.QAnimal;
